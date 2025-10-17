@@ -1,8 +1,9 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
+import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
-import { Home, Zap, CreditCard, Settings, LogOut } from "lucide-react";
+import { Home, Zap, CreditCard, Settings, LogOut, Moon, Sun } from "lucide-react";
 import logo from "@/assets/logo.png";
 
 interface DashboardLayoutProps {
@@ -12,6 +13,7 @@ interface DashboardLayoutProps {
 export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const { signOut } = useAuth();
   const location = useLocation();
+  const { theme, setTheme } = useTheme();
 
   const navItems = [
     { path: "/dashboard", icon: Home, label: "Resumo" },
@@ -38,7 +40,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             return (
               <Link key={item.path} to={item.path}>
                 <Button
-                  variant={isActive ? "secondary" : "ghost"}
+                  variant={isActive ? "default" : "ghost"}
                   className="w-full justify-start"
                 >
                   <Icon className="mr-2 h-4 w-4" />
@@ -49,10 +51,29 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           })}
         </nav>
 
-        <Button variant="ghost" className="w-full justify-start text-destructive" onClick={signOut}>
-          <LogOut className="mr-2 h-4 w-4" />
-          Sair
-        </Button>
+        <div className="space-y-2 border-t border-border pt-4">
+          <Button 
+            variant="ghost" 
+            className="w-full justify-start" 
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          >
+            {theme === "dark" ? (
+              <>
+                <Sun className="mr-2 h-4 w-4" />
+                Modo Claro
+              </>
+            ) : (
+              <>
+                <Moon className="mr-2 h-4 w-4" />
+                Modo Escuro
+              </>
+            )}
+          </Button>
+          <Button variant="ghost" className="w-full justify-start text-destructive" onClick={signOut}>
+            <LogOut className="mr-2 h-4 w-4" />
+            Sair
+          </Button>
+        </div>
       </aside>
 
       {/* Main Content */}

@@ -8,6 +8,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { Zap, DollarSign, TrendingUp, Copy, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 
 interface Streamer {
   id: string;
@@ -26,11 +28,13 @@ const Dashboard = () => {
     queueCount: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [chartData, setChartData] = useState<any[]>([]);
 
   useEffect(() => {
     if (user) {
       loadStreamerData();
       loadStats();
+      loadChartData();
     }
   }, [user]);
 
@@ -110,6 +114,51 @@ const Dashboard = () => {
     }
   };
 
+  const loadChartData = async () => {
+    try {
+      const { data: streamerData } = await supabase
+        .from("streamers")
+        .select("id")
+        .eq("auth_user_id", user?.id)
+        .single();
+
+      if (!streamerData) return;
+
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      const { data: transactions } = await supabase
+        .from("transactions")
+        .select("amount_streamer_cents, created_at")
+        .eq("streamer_id", streamerData.id)
+        .eq("status", "paid")
+        .gte("created_at", thirtyDaysAgo.toISOString())
+        .order("created_at", { ascending: true });
+
+      if (!transactions) return;
+
+      // Agrupar por dia
+      const grouped = transactions.reduce((acc: any, t) => {
+        const date = new Date(t.created_at).toLocaleDateString("pt-BR", {
+          day: "2-digit",
+          month: "short",
+        });
+        if (!acc[date]) acc[date] = 0;
+        acc[date] += t.amount_streamer_cents / 100;
+        return acc;
+      }, {});
+
+      const data = Object.entries(grouped).map(([date, value]) => ({
+        date,
+        revenue: value,
+      }));
+
+      setChartData(data);
+    } catch (error) {
+      console.error("Error loading chart data:", error);
+    }
+  };
+
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
     toast.success(`${label} copiado!`);
@@ -173,6 +222,48 @@ const Dashboard = () => {
               </CardContent>
             </Card>
           </div>
+
+          {/* Revenue Chart */}
+          <Card className="border-border shadow-card">
+            <CardHeader>
+              <CardTitle>Receita dos Últimos 30 Dias</CardTitle>
+              <CardDescription>Evolução diária da sua arrecadação</CardDescription>
+            </CardHeader>
+            <CardContent className="h-[300px]">
+              <ChartContainer
+                config={{
+                  revenue: {
+                    label: "Receita",
+                    color: "hsl(var(--primary))",
+                  },
+                }}
+              >
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis
+                      dataKey="date"
+                      className="text-xs"
+                      tick={{ fill: "hsl(var(--muted-foreground))" }}
+                    />
+                    <YAxis
+                      className="text-xs"
+                      tick={{ fill: "hsl(var(--muted-foreground))" }}
+                      tickFormatter={(value) => `R$ ${value.toFixed(0)}`}
+                    />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Line
+                      type="monotone"
+                      dataKey="revenue"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth={2}
+                      dot={{ fill: "hsl(var(--primary))", r: 4 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            </CardContent>
+          </Card>
 
           {/* Quick Links */}
           <div className="grid md:grid-cols-2 gap-6">

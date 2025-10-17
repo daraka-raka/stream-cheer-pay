@@ -57,15 +57,6 @@ export default function Settings() {
                 Seu handle aparece na URL da sua página pública
               </p>
             </div>
-            <div>
-              <Label htmlFor="bio">Bio</Label>
-              <Textarea
-                id="bio"
-                placeholder="Conte um pouco sobre você..."
-                defaultValue={streamer?.bio}
-                rows={3}
-              />
-            </div>
             <Button>Salvar Perfil</Button>
           </div>
         </Card>

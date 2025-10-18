@@ -274,6 +274,53 @@ export type Database = {
         }
         Relationships: []
       }
+      withdrawals: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          id: string
+          notes: string | null
+          pix_key: string
+          processed_at: string | null
+          requested_at: string
+          status: string
+          streamer_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          pix_key: string
+          processed_at?: string | null
+          requested_at?: string
+          status?: string
+          streamer_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          pix_key?: string
+          processed_at?: string | null
+          requested_at?: string
+          status?: string
+          streamer_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "withdrawals_streamer_id_fkey"
+            columns: ["streamer_id"]
+            isOneToOne: false
+            referencedRelation: "streamers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

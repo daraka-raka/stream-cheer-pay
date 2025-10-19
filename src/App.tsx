@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import Alerts from "./pages/Alerts";
 import Transactions from "./pages/Transactions";
 import Settings from "./pages/Settings";
+import PublicStreamerPage from "./pages/PublicStreamerPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
               <Route path="/transactions" element={<ProtectedRoute><Transactions /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="/:handle" element={<PublicStreamerPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </TooltipProvider>

@@ -58,6 +58,7 @@ export default function Alerts() {
   });
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [coverImage, setCoverImage] = useState<File | null>(null);
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -118,6 +119,12 @@ export default function Alerts() {
       return;
     }
 
+    // Validate thumbnail size for video
+    if (thumbnailFile && thumbnailFile.size > 5 * 1024 * 1024) {
+      toast.error("Thumbnail muito grande. Tamanho máximo: 5MB");
+      return;
+    }
+
     // Check alert limit (only for new alerts)
     if (!editingAlert && alerts.length >= 20) {
       toast.error("Você atingiu o limite de 20 alertas");
@@ -169,14 +176,17 @@ export default function Alerts() {
         mediaPath = publicUrl;
       }
 
-      // Upload cover image for audio
-      if (coverImage) {
-        const fileExt = coverImage.name.split(".").pop();
-        const fileName = `${streamerId}/cover_${Date.now()}.${fileExt}`;
+      // Upload cover image for audio or thumbnail for video
+      if (coverImage || thumbnailFile) {
+        const file = coverImage || thumbnailFile;
+        if (!file) return;
+        
+        const fileExt = file.name.split(".").pop();
+        const fileName = `${streamerId}/${coverImage ? 'cover' : 'thumb'}_${Date.now()}.${fileExt}`;
 
         const { error: uploadError } = await supabase.storage
           .from("alerts")
-          .upload(fileName, coverImage);
+          .upload(fileName, file);
 
         if (uploadError) throw uploadError;
 
@@ -223,6 +233,7 @@ export default function Alerts() {
       setFormData({ title: "", description: "", price: "", mediaType: "image" });
       setMediaFile(null);
       setCoverImage(null);
+      setThumbnailFile(null);
       loadStreamerAndAlerts();
     } catch (error: any) {
       toast.error(editingAlert ? "Erro ao atualizar alerta" : "Erro ao criar alerta");
@@ -397,6 +408,7 @@ export default function Alerts() {
               setFormData({ title: "", description: "", price: "", mediaType: "image" });
               setMediaFile(null);
               setCoverImage(null);
+              setThumbnailFile(null);
             }
           }}
         >
@@ -478,6 +490,20 @@ export default function Alerts() {
                   />
                   <p className="text-xs text-muted-foreground mt-1">
                     Obrigatório para alertas de áudio
+                  </p>
+                </div>
+              )}
+              {formData.mediaType === "video" && (
+                <div>
+                  <Label htmlFor="thumbnail">Thumbnail do Vídeo (opcional, máx. 5MB)</Label>
+                  <Input
+                    id="thumbnail"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setThumbnailFile(e.target.files?.[0] || null)}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Imagem que aparecerá na galeria antes do vídeo ser reproduzido
                   </p>
                 </div>
               )}

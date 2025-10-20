@@ -15,6 +15,8 @@ import { useState } from "react";
 
 const PublicStreamerPage = () => {
   const { handle } = useParams<{ handle: string }>();
+  // Remove @ prefix if present
+  const cleanHandle = handle?.startsWith('@') ? handle.slice(1) : handle;
   const navigate = useNavigate();
   const [selectedAlert, setSelectedAlert] = useState<any>(null);
   const [buyerMessage, setBuyerMessage] = useState("");
@@ -23,12 +25,12 @@ const PublicStreamerPage = () => {
   const [transactionId, setTransactionId] = useState<string | null>(null);
 
   const { data: streamer, isLoading: streamerLoading } = useQuery({
-    queryKey: ["public-streamer", handle],
+    queryKey: ["public-streamer", cleanHandle],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("streamers")
         .select("*")
-        .eq("handle", handle)
+        .eq("handle", cleanHandle)
         .maybeSingle();
 
       if (error) throw error;
@@ -271,9 +273,7 @@ const PublicStreamerPage = () => {
         ) : alerts && alerts.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {alerts.map((alert) => {
-              const thumbUrl = alert.thumb_path
-                ? `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/alerts/${alert.thumb_path}`
-                : `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/alerts/${alert.media_path}`;
+                  const thumbUrl = alert.thumb_path || alert.media_path;
 
               return (
                 <Card

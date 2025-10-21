@@ -17,6 +17,8 @@ const PublicStreamerPage = () => {
   const { handle } = useParams<{ handle: string }>();
   // Remove @ prefix if present
   const cleanHandle = handle?.startsWith('@') ? handle.slice(1) : handle;
+  console.debug('[PublicStreamerPage] raw handle:', handle);
+  console.debug('[PublicStreamerPage] clean handle:', cleanHandle);
   const navigate = useNavigate();
   const [selectedAlert, setSelectedAlert] = useState<any>(null);
   const [buyerMessage, setBuyerMessage] = useState("");

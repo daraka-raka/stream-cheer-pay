@@ -34,6 +34,7 @@ const App = () => (
               <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="/@:handle" element={<PublicStreamerPage />} />
+              <Route path=":handle" element={<PublicStreamerPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </TooltipProvider>

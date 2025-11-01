@@ -93,6 +93,29 @@ export default function Alerts() {
     }
   };
 
+  const handleTestAlert = async (alertId: string) => {
+    if (!streamerId) return;
+
+    try {
+      const { error } = await supabase.from("alert_queue").insert({
+        streamer_id: streamerId,
+        alert_id: alertId,
+        transaction_id: null,
+        is_test: true,
+        status: "queued",
+        payload: {
+          buyer_note: "🧪 Alerta de teste",
+        },
+      });
+
+      if (error) throw error;
+      toast.success("Alerta de teste enviado! Verifique o widget no OBS.");
+    } catch (error) {
+      console.error("Error sending test alert:", error);
+      toast.error("Erro ao enviar alerta de teste");
+    }
+  };
+
   const handleCreateAlert = async () => {
     if (!streamerId) return;
 
@@ -387,7 +410,12 @@ export default function Alerts() {
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
-                    <Button size="sm" variant="outline" className="gap-1">
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="gap-1"
+                      onClick={() => handleTestAlert(alert.id)}
+                    >
                       <Play className="h-3 w-3" />
                       Testar
                     </Button>

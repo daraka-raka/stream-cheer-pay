@@ -298,7 +298,7 @@ export default function Settings() {
               </div>
             </div>
             <div>
-              <Label>Widget URL (para OBS)</Label>
+              <Label>Widget URL (para OBS/Streamlabs)</Label>
               <div className="flex gap-2 mt-1">
                 <Input
                   readOnly
@@ -314,13 +314,24 @@ export default function Settings() {
                       "Widget URL"
                     )
                   }
+                  disabled={!streamer?.public_key}
                 >
                   <Copy className="h-4 w-4" />
                 </Button>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Cole esta URL no OBS como Browser Source
-              </p>
+              <div className="mt-3 p-3 bg-muted/50 rounded-lg text-sm space-y-2">
+                <p className="font-medium">📺 Como configurar no OBS:</p>
+                <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
+                  <li>Adicionar fonte → Browser</li>
+                  <li>Colar a URL acima</li>
+                  <li>Configurar: 1920x1080, 30 FPS</li>
+                  <li>✅ Marcar "Shutdown source when not visible"</li>
+                </ol>
+                <p className="text-xs italic">
+                  Alertas aparecerão automaticamente quando alguém comprar. 
+                  Use o botão "Testar" na página de Alertas para verificar.
+                </p>
+              </div>
             </div>
           </div>
         </Card>

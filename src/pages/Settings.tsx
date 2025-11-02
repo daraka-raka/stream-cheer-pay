@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { useTheme } from "next-themes";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { profileSchema } from "@/lib/validations";
 
 // Helper function to generate URL-friendly handle from display name
 const generateHandle = (displayName: string): string => {
@@ -103,8 +104,24 @@ export default function Settings() {
   };
 
   const handleSaveProfile = async () => {
-    if (!streamer || !displayName.trim()) {
-      toast.error("Nome de exibição é obrigatório");
+    if (!streamer) return;
+
+    // Validate with zod schema
+    try {
+      const validationData = {
+        display_name: displayName.trim(),
+        bio: bio.trim() || '',
+        handle: generateHandle(displayName)
+      };
+      
+      const result = profileSchema.safeParse(validationData);
+      if (!result.success) {
+        const error = result.error.errors[0];
+        toast.error(error.message);
+        return;
+      }
+    } catch (error) {
+      toast.error("Erro na validação dos dados");
       return;
     }
 

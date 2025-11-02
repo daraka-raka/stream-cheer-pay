@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Edit, Play, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { alertSchema } from "@/lib/validations";
 import {
   Dialog,
   DialogContent,
@@ -119,15 +120,24 @@ export default function Alerts() {
   const handleCreateAlert = async () => {
     if (!streamerId) return;
 
-    // Validations
-    if (!formData.title.trim()) {
-      toast.error("Título é obrigatório");
-      return;
-    }
-
+    // Validate with zod schema
     const priceCents = Math.round(parseFloat(formData.price) * 100);
-    if (isNaN(priceCents) || priceCents < 100) {
-      toast.error("Preço mínimo é R$ 1,00");
+    
+    try {
+      const validationData = {
+        title: formData.title.trim(),
+        description: formData.description,
+        price_cents: priceCents
+      };
+      
+      const result = alertSchema.safeParse(validationData);
+      if (!result.success) {
+        const error = result.error.errors[0];
+        toast.error(error.message);
+        return;
+      }
+    } catch (error) {
+      toast.error("Erro na validação dos dados");
       return;
     }
 

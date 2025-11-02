@@ -3,6 +3,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { withdrawalSchema } from "@/lib/validations";
 import {
   Table,
   TableBody,
@@ -99,33 +100,41 @@ export default function Transactions() {
   const handleWithdraw = async () => {
     if (!streamerId) return;
 
-    const amountCents = Math.round(parseFloat(withdrawAmount) * 100);
-
-    if (isNaN(amountCents) || amountCents < 10000) {
-      toast({
-        title: "Valor mínimo é R$ 100,00",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (amountCents > availableBalance) {
-      toast({
-        title: "Saldo insuficiente",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!pixKey.trim()) {
-      toast({
-        title: "Chave PIX é obrigatória",
-        variant: "destructive",
-      });
-      return;
-    }
-
+    // Validate with zod schema
     try {
+      const amountCents = Math.round(parseFloat(withdrawAmount) * 100);
+      
+      const validationData = {
+        pix_key: pixKey.trim(),
+        amount_cents: amountCents
+      };
+      
+      const result = withdrawalSchema.safeParse(validationData);
+      if (!result.success) {
+        const error = result.error.errors[0];
+        toast({
+          title: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (amountCents < 10000) {
+        toast({
+          title: "Valor mínimo é R$ 100,00",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (amountCents > availableBalance) {
+        toast({
+          title: "Saldo insuficiente",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const { error } = await supabase.from("withdrawals").insert({
         streamer_id: streamerId,
         amount_cents: amountCents,

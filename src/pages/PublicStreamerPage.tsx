@@ -95,50 +95,8 @@ const PublicStreamerPage = () => {
     }
   };
 
-  const handleConfirmPayment = async () => {
-    if (!transactionId || !selectedAlert) return;
-
-    try {
-      // Update transaction to paid
-      const { error: transactionError } = await supabase
-        .from("transactions")
-        .update({ status: "paid" })
-        .eq("id", transactionId);
-
-      if (transactionError) throw transactionError;
-
-      // Add to alert queue
-      const { error: queueError } = await supabase
-        .from("alert_queue")
-        .insert({
-          streamer_id: streamer!.id,
-          alert_id: selectedAlert.id,
-          transaction_id: transactionId,
-          status: "queued",
-          payload: {
-            buyer_note: buyerMessage || null,
-          },
-        });
-
-      if (queueError) throw queueError;
-
-      toast({
-        title: "Alerta comprado!",
-        description: "Seu alerta aparecerá na live em breve.",
-      });
-
-      setPaymentDialogOpen(false);
-      setBuyerMessage("");
-      setSelectedAlert(null);
-      setTransactionId(null);
-    } catch (error: any) {
-      toast({
-        title: "Erro ao confirmar pagamento",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
+  // Payment functionality disabled - requires Stripe integration
+  // See security documentation for proper payment implementation
 
   const getMediaIcon = (type: string) => {
     switch (type) {
@@ -384,35 +342,35 @@ const PublicStreamerPage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Payment Dialog (Placeholder) */}
+      {/* Payment Disabled - Requires Stripe Integration */}
       <AlertDialog open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Pagamento Pendente</AlertDialogTitle>
+            <AlertDialogTitle>⚠️ Pagamentos Temporariamente Desabilitados</AlertDialogTitle>
             <AlertDialogDescription>
-              Este é um placeholder de pagamento. Em produção, aqui seria exibido um QR Code Pix ou link de pagamento.
+              A funcionalidade de pagamento está temporariamente desabilitada por questões de segurança.
+              A integração com gateway de pagamento (Stripe) precisa ser configurada antes de aceitar pagamentos reais.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="py-6 space-y-4">
             <div className="bg-muted rounded-lg p-8 flex items-center justify-center">
               <div className="text-center space-y-2">
-                <div className="text-6xl">💳</div>
-                <p className="text-sm text-muted-foreground">QR Code de Pagamento</p>
+                <div className="text-6xl">🚧</div>
+                <p className="text-sm text-muted-foreground">Sistema de Pagamento em Configuração</p>
                 <p className="text-lg font-bold">
                   R$ {selectedAlert && (selectedAlert.price_cents / 100).toFixed(2)}
                 </p>
               </div>
             </div>
-            <p className="text-sm text-muted-foreground text-center">
-              Para testar, clique em "Confirmar Pagamento" abaixo.
-            </p>
+            <div className="bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+              <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                <strong>Para o Streamer:</strong> Configure a integração com Stripe nas configurações para aceitar pagamentos reais e seguros.
+              </p>
+            </div>
           </div>
           <AlertDialogFooter>
             <Button variant="outline" onClick={() => setPaymentDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleConfirmPayment} variant="hero">
-              Confirmar Pagamento (Teste)
+              Entendi
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>

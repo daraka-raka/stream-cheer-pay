@@ -63,6 +63,13 @@ export type Database = {
             foreignKeyName: "alert_queue_streamer_id_fkey"
             columns: ["streamer_id"]
             isOneToOne: false
+            referencedRelation: "public_streamer_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alert_queue_streamer_id_fkey"
+            columns: ["streamer_id"]
+            isOneToOne: false
             referencedRelation: "streamers"
             referencedColumns: ["id"]
           },
@@ -120,6 +127,13 @@ export type Database = {
             foreignKeyName: "alerts_streamer_id_fkey"
             columns: ["streamer_id"]
             isOneToOne: false
+            referencedRelation: "public_streamer_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alerts_streamer_id_fkey"
+            columns: ["streamer_id"]
+            isOneToOne: false
             referencedRelation: "streamers"
             referencedColumns: ["id"]
           },
@@ -145,6 +159,13 @@ export type Database = {
           theme?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "settings_streamer_id_fkey"
+            columns: ["streamer_id"]
+            isOneToOne: true
+            referencedRelation: "public_streamer_profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "settings_streamer_id_fkey"
             columns: ["streamer_id"]
@@ -251,6 +272,13 @@ export type Database = {
             foreignKeyName: "transactions_streamer_id_fkey"
             columns: ["streamer_id"]
             isOneToOne: false
+            referencedRelation: "public_streamer_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_streamer_id_fkey"
+            columns: ["streamer_id"]
+            isOneToOne: false
             referencedRelation: "streamers"
             referencedColumns: ["id"]
           },
@@ -316,6 +344,13 @@ export type Database = {
             foreignKeyName: "withdrawals_streamer_id_fkey"
             columns: ["streamer_id"]
             isOneToOne: false
+            referencedRelation: "public_streamer_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "withdrawals_streamer_id_fkey"
+            columns: ["streamer_id"]
+            isOneToOne: false
             referencedRelation: "streamers"
             referencedColumns: ["id"]
           },
@@ -323,7 +358,36 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_streamer_profiles: {
+        Row: {
+          bio: string | null
+          created_at: string | null
+          display_name: string | null
+          handle: string | null
+          id: string | null
+          photo_url: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          bio?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          handle?: string | null
+          id?: string | null
+          photo_url?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          bio?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          handle?: string | null
+          id?: string | null
+          photo_url?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {

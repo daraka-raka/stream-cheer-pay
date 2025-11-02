@@ -30,7 +30,7 @@ const PublicStreamerPage = () => {
     queryKey: ["public-streamer", cleanHandle],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("streamers")
+        .from("public_streamer_profiles")
         .select("*")
         .eq("handle", cleanHandle)
         .maybeSingle();

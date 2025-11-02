@@ -366,6 +366,7 @@ export type Database = {
           handle: string | null
           id: string | null
           photo_url: string | null
+          public_key: string | null
           updated_at: string | null
         }
         Insert: {
@@ -375,6 +376,7 @@ export type Database = {
           handle?: string | null
           id?: string | null
           photo_url?: string | null
+          public_key?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -384,6 +386,7 @@ export type Database = {
           handle?: string | null
           id?: string | null
           photo_url?: string | null
+          public_key?: string | null
           updated_at?: string | null
         }
         Relationships: []

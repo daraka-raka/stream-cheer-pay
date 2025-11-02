@@ -35,7 +35,7 @@ const WidgetOverlay = () => {
       if (!publicKey) return;
 
       const { data: streamer } = await supabase
-        .from("streamers")
+        .from("public_streamer_profiles")
         .select("id")
         .eq("public_key", publicKey)
         .single();

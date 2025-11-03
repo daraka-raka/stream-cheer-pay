@@ -95,8 +95,48 @@ const PublicStreamerPage = () => {
     }
   };
 
-  // Payment functionality disabled - requires Stripe integration
-  // See security documentation for proper payment implementation
+  const handleConfirmTestPayment = async () => {
+    if (!transactionId || !selectedAlert) return;
+
+    try {
+      const { error: updateError } = await supabase
+        .from("transactions")
+        .update({ status: "paid" })
+        .eq("id", transactionId);
+
+      if (updateError) throw updateError;
+
+      // Add to alert queue
+      const { error: queueError } = await supabase
+        .from("alert_queue")
+        .insert({
+          transaction_id: transactionId,
+          alert_id: selectedAlert.id,
+          streamer_id: streamer!.id,
+          status: "queued",
+          is_test: true,
+          payload: { buyer_note: buyerMessage },
+        });
+
+      if (queueError) throw queueError;
+
+      toast({
+        title: "Pagamento de teste confirmado!",
+        description: "Seu alerta foi adicionado à fila do streamer.",
+      });
+
+      setPaymentDialogOpen(false);
+      setBuyerMessage("");
+      setTransactionId(null);
+      setSelectedAlert(null);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao confirmar pagamento",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
 
   const getMediaIcon = (type: string) => {
     switch (type) {
@@ -238,7 +278,7 @@ const PublicStreamerPage = () => {
               return (
                 <Card
                   key={alert.id}
-                  className="cursor-pointer hover:shadow-glow transition-all duration-300 hover:scale-105"
+                  className="cursor-pointer hover:shadow-glow transition-all duration-300 hover:scale-105 relative"
                   onClick={() => handleAlertClick(alert)}
                 >
                   <CardHeader className="p-0">
@@ -252,6 +292,11 @@ const PublicStreamerPage = () => {
                         {getMediaIcon(alert.media_type)}
                         <span className="ml-1 capitalize">{alert.media_type}</span>
                       </Badge>
+                      {alert.test_mode && (
+                        <Badge variant="outline" className="absolute top-2 left-2 bg-yellow-500/90 text-yellow-950 border-yellow-600">
+                          🧪 Teste
+                        </Badge>
+                      )}
                     </div>
                   </CardHeader>
                   <CardContent className="p-4">
@@ -342,36 +387,49 @@ const PublicStreamerPage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Payment Disabled - Requires Stripe Integration */}
+      {/* Payment Dialog - Test Mode or Stripe Required */}
       <AlertDialog open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>⚠️ Pagamentos Temporariamente Desabilitados</AlertDialogTitle>
+            <AlertDialogTitle>
+              {selectedAlert?.test_mode ? "🧪 Pagamento de Teste" : "⚠️ Pagamentos Desabilitados"}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              A funcionalidade de pagamento está temporariamente desabilitada por questões de segurança.
-              A integração com gateway de pagamento (Stripe) precisa ser configurada antes de aceitar pagamentos reais.
+              {selectedAlert?.test_mode 
+                ? "Este alerta está em modo de teste. Você pode simular um pagamento sem custos reais. Em produção, esta funcionalidade seria substituída pela integração com Stripe."
+                : "A funcionalidade de pagamento está temporariamente desabilitada por questões de segurança. A integração com gateway de pagamento (Stripe) precisa ser configurada antes de aceitar pagamentos reais."
+              }
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="py-6 space-y-4">
             <div className="bg-muted rounded-lg p-8 flex items-center justify-center">
               <div className="text-center space-y-2">
-                <div className="text-6xl">🚧</div>
-                <p className="text-sm text-muted-foreground">Sistema de Pagamento em Configuração</p>
+                <div className="text-6xl">{selectedAlert?.test_mode ? "🧪" : "🚧"}</div>
+                <p className="text-sm text-muted-foreground">
+                  {selectedAlert?.test_mode ? "Modo de Teste Ativo" : "Sistema de Pagamento em Configuração"}
+                </p>
                 <p className="text-lg font-bold">
                   R$ {selectedAlert && (selectedAlert.price_cents / 100).toFixed(2)}
                 </p>
               </div>
             </div>
-            <div className="bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-              <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                <strong>Para o Streamer:</strong> Configure a integração com Stripe nas configurações para aceitar pagamentos reais e seguros.
-              </p>
-            </div>
+            {!selectedAlert?.test_mode && (
+              <div className="bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+                <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                  <strong>Para o Streamer:</strong> Configure a integração com Stripe nas configurações para aceitar pagamentos reais e seguros.
+                </p>
+              </div>
+            )}
           </div>
           <AlertDialogFooter>
             <Button variant="outline" onClick={() => setPaymentDialogOpen(false)}>
-              Entendi
+              {selectedAlert?.test_mode ? "Cancelar" : "Entendi"}
             </Button>
+            {selectedAlert?.test_mode && (
+              <Button onClick={handleConfirmTestPayment} variant="hero">
+                Confirmar Pagamento de Teste
+              </Button>
+            )}
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

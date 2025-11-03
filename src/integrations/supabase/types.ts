@@ -92,6 +92,7 @@ export type Database = {
           price_cents: number
           status: string
           streamer_id: string
+          test_mode: boolean | null
           thumb_path: string | null
           title: string
           updated_at: string | null
@@ -105,6 +106,7 @@ export type Database = {
           price_cents: number
           status?: string
           streamer_id: string
+          test_mode?: boolean | null
           thumb_path?: string | null
           title: string
           updated_at?: string | null
@@ -118,6 +120,7 @@ export type Database = {
           price_cents?: number
           status?: string
           streamer_id?: string
+          test_mode?: boolean | null
           thumb_path?: string | null
           title?: string
           updated_at?: string | null

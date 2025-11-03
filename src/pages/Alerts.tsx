@@ -7,6 +7,7 @@ import { Plus, Edit, Play, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { alertSchema } from "@/lib/validations";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -56,6 +57,7 @@ export default function Alerts() {
     description: "",
     price: "",
     mediaType: "image",
+    testMode: false,
   });
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [coverImage, setCoverImage] = useState<File | null>(null);
@@ -238,6 +240,7 @@ export default function Alerts() {
         media_type: formData.mediaType,
         media_path: mediaPath,
         thumb_path: thumbPath || null,
+        test_mode: formData.testMode,
       };
 
       if (editingAlert) {
@@ -263,7 +266,7 @@ export default function Alerts() {
 
       setIsDialogOpen(false);
       setEditingAlert(null);
-      setFormData({ title: "", description: "", price: "", mediaType: "image" });
+      setFormData({ title: "", description: "", price: "", mediaType: "image", testMode: false });
       setMediaFile(null);
       setCoverImage(null);
       setThumbnailFile(null);
@@ -283,6 +286,7 @@ export default function Alerts() {
       description: alert.description || "",
       price: (alert.price_cents / 100).toString(),
       mediaType: alert.media_type,
+      testMode: alert.test_mode || false,
     });
     setIsDialogOpen(true);
   };
@@ -395,9 +399,16 @@ export default function Alerts() {
                     <span className="text-lg font-bold text-primary">
                       R$ {(alert.price_cents / 100).toFixed(2)}
                     </span>
-                    <span className="text-xs px-2 py-1 bg-secondary rounded">
-                      {alert.media_type}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs px-2 py-1 bg-secondary rounded">
+                        {alert.media_type}
+                      </span>
+                      {alert.test_mode && (
+                        <span className="text-xs px-2 py-1 bg-yellow-500/20 text-yellow-700 dark:text-yellow-300 rounded border border-yellow-500/30">
+                          🧪 Teste
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>
@@ -443,7 +454,7 @@ export default function Alerts() {
             setIsDialogOpen(open);
             if (!open) {
               setEditingAlert(null);
-              setFormData({ title: "", description: "", price: "", mediaType: "image" });
+              setFormData({ title: "", description: "", price: "", mediaType: "image", testMode: false });
               setMediaFile(null);
               setCoverImage(null);
               setThumbnailFile(null);
@@ -557,6 +568,23 @@ export default function Alerts() {
                   onChange={(e) => setMediaFile(e.target.files?.[0] || null)}
                 />
               </div>
+              <div className="flex items-center justify-between rounded-lg border p-4">
+                <div className="space-y-0.5">
+                  <Label htmlFor="testMode" className="text-base">
+                    🧪 Modo de Teste
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    Permite pagamentos simulados sem integração Stripe
+                  </p>
+                </div>
+                <Switch
+                  id="testMode"
+                  checked={formData.testMode}
+                  onCheckedChange={(checked) =>
+                    setFormData({ ...formData, testMode: checked })
+                  }
+                />
+              </div>
             </div>
             <DialogFooter>
               <Button
@@ -569,6 +597,7 @@ export default function Alerts() {
                     description: "",
                     price: "",
                     mediaType: "image",
+                    testMode: false,
                   });
                   setMediaFile(null);
                   setCoverImage(null);

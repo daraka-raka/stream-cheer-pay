@@ -1,1 +1,7 @@
 project_id = "qbyezofoygfeqxvtfhby"
+
+[auth.password_requirements]
+# Password strength and breach detection
+enable_password_strength = true
+min_length = 8
+enable_hibp = true  # Have I Been Pwned integration

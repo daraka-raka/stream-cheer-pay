@@ -23,33 +23,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    let mounted = true;
+
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth event:', event, 'Session:', !!session);
+        if (!mounted) return;
         
-        // Handle token refresh errors gracefully
+        console.log("Auth event:", event, session?.user?.email);
+        
         if (event === 'TOKEN_REFRESHED') {
           console.log('Token refreshed successfully');
         }
         
         if (event === 'SIGNED_OUT') {
-          console.log('User signed out');
           setSession(null);
           setUser(null);
-        } else {
-          setSession(session);
-          setUser(session?.user ?? null);
+          setLoading(false);
+          return;
         }
-        
+
+        // Update session for all other auth events
+        setSession(session);
+        setUser(session?.user ?? null);
         setLoading(false);
       }
     );
 
     // Check for existing session
     supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (!mounted) return;
+      
       if (error) {
-        console.error('Error getting session:', error);
+        console.error("Error getting session:", error);
         setSession(null);
         setUser(null);
       } else {
@@ -58,13 +64,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       setLoading(false);
     }).catch((error) => {
+      if (!mounted) return;
       console.error('Failed to get session:', error);
       setSession(null);
       setUser(null);
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signUp = async (email: string, password: string, displayName: string) => {
@@ -95,20 +105,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       
       if (error) {
+        console.error("Sign in error:", error);
         toast.error(error.message);
         return { error };
+      }
+      
+      if (data.session) {
+        setSession(data.session);
+        setUser(data.session.user);
       }
       
       toast.success("Login realizado!");
       navigate("/dashboard");
       return { error: null };
     } catch (error: any) {
+      console.error("Sign in exception:", error);
       toast.error("Erro ao fazer login");
       return { error };
     }
@@ -117,9 +134,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signOut = async () => {
     try {
       await supabase.auth.signOut();
+      setSession(null);
+      setUser(null);
       toast.success("Logout realizado");
       navigate("/");
     } catch (error) {
+      console.error("Sign out error:", error);
       toast.error("Erro ao fazer logout");
     }
   };

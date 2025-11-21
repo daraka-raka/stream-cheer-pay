@@ -1,4 +1,4 @@
-import { Home, Zap, CreditCard, Settings, LogOut, Moon, Sun } from "lucide-react";
+import { Home, Zap, CreditCard, Settings, LogOut, Moon, Sun, Bell } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import { useTheme } from "next-themes";
@@ -15,11 +15,14 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { useNotifications } from "@/hooks/use-notifications";
 import logo from "@/assets/logo.png";
 
 const navItems = [
   { path: "/dashboard", icon: Home, label: "Resumo" },
   { path: "/alerts", icon: Zap, label: "Alertas" },
+  { path: "/notifications", icon: Bell, label: "Notificações", badge: true },
   { path: "/transactions", icon: CreditCard, label: "Transações" },
   { path: "/settings", icon: Settings, label: "Configurações" },
 ];
@@ -28,6 +31,7 @@ export function AppSidebar() {
   const { signOut } = useAuth();
   const { theme, setTheme } = useTheme();
   const { state } = useSidebar();
+  const { unreadCount } = useNotifications();
   const isCollapsed = state === "collapsed";
 
   return (
@@ -48,6 +52,7 @@ export function AppSidebar() {
             <SidebarMenu>
               {navItems.map((item) => {
                 const Icon = item.icon;
+                const showBadge = item.badge && unreadCount > 0;
                 return (
                   <SidebarMenuItem key={item.path}>
                     <SidebarMenuButton asChild>
@@ -57,7 +62,17 @@ export function AppSidebar() {
                           isActive ? "bg-primary text-primary-foreground" : ""
                         }
                       >
-                        <Icon className="h-4 w-4" />
+                        <div className="relative">
+                          <Icon className="h-4 w-4" />
+                          {showBadge && (
+                            <Badge 
+                              variant="destructive" 
+                              className="absolute -top-2 -right-2 h-4 w-4 p-0 flex items-center justify-center text-[10px]"
+                            >
+                              {unreadCount > 9 ? "9+" : unreadCount}
+                            </Badge>
+                          )}
+                        </div>
                         <span>{item.label}</span>
                       </NavLink>
                     </SidebarMenuButton>

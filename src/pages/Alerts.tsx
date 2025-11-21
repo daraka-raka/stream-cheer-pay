@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Edit, Play, Trash2 } from "lucide-react";
+import { Plus, Edit, Play, Trash2, Copy, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { alertSchema } from "@/lib/validations";
@@ -291,6 +291,22 @@ export default function Alerts() {
     setIsDialogOpen(true);
   };
 
+  const handleDuplicate = (alert: any) => {
+    setEditingAlert(null);
+    setFormData({
+      title: `${alert.title} (Cópia)`,
+      description: alert.description || "",
+      price: (alert.price_cents / 100).toString(),
+      mediaType: alert.media_type,
+      testMode: alert.test_mode || false,
+    });
+    setMediaFile(null);
+    setCoverImage(null);
+    setThumbnailFile(null);
+    setIsDialogOpen(true);
+    toast.info("Configure o novo arquivo de mídia para completar a duplicação");
+  };
+
   const handleDelete = async (alertId: string) => {
     try {
       setLoading(true);
@@ -420,7 +436,12 @@ export default function Alerts() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
                         <DropdownMenuItem onClick={() => handleEdit(alert)}>
+                          <Edit className="h-3 w-3 mr-2" />
                           Editar Informações
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleDuplicate(alert)}>
+                          <Copy className="h-3 w-3 mr-2" />
+                          Duplicar Alerta
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => setDeleteAlertId(alert.id)}
@@ -625,7 +646,10 @@ export default function Alerts() {
         >
           <DialogContent className="max-w-3xl">
             <DialogHeader>
-              <DialogTitle>{previewAlert?.title}</DialogTitle>
+              <DialogTitle className="flex items-center gap-2">
+                <Eye className="h-5 w-5" />
+                {previewAlert?.title}
+              </DialogTitle>
               <DialogDescription>{previewAlert?.description}</DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
@@ -656,12 +680,33 @@ export default function Alerts() {
                 </div>
               )}
               <div className="flex items-center justify-between pt-4 border-t">
-                <span className="text-2xl font-bold text-primary">
-                  R$ {previewAlert && (previewAlert.price_cents / 100).toFixed(2)}
-                </span>
-                <span className="text-sm px-3 py-1 bg-secondary rounded">
-                  {previewAlert?.media_type}
-                </span>
+                <div className="space-y-1">
+                  <span className="text-2xl font-bold text-primary block">
+                    R$ {previewAlert && (previewAlert.price_cents / 100).toFixed(2)}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm px-3 py-1 bg-secondary rounded">
+                      {previewAlert?.media_type}
+                    </span>
+                    {previewAlert?.test_mode && (
+                      <span className="text-xs px-2 py-1 bg-yellow-500/20 text-yellow-700 dark:text-yellow-300 rounded border border-yellow-500/30">
+                        🧪 Teste
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <Button 
+                  onClick={() => {
+                    if (previewAlert) {
+                      handleTestAlert(previewAlert.id);
+                      setPreviewAlert(null);
+                    }
+                  }}
+                  className="gap-2"
+                >
+                  <Play className="h-4 w-4" />
+                  Testar no Widget
+                </Button>
               </div>
             </div>
           </DialogContent>

@@ -192,22 +192,37 @@ export type Database = {
       }
       settings: {
         Row: {
+          email_notifications: boolean | null
+          milestone_amount_cents: number | null
+          notify_on_milestone: boolean | null
           overlay_image_duration_seconds: number | null
           show_prices: boolean | null
           streamer_id: string
           theme: string | null
+          webhook_url: string | null
+          widget_position: string | null
         }
         Insert: {
+          email_notifications?: boolean | null
+          milestone_amount_cents?: number | null
+          notify_on_milestone?: boolean | null
           overlay_image_duration_seconds?: number | null
           show_prices?: boolean | null
           streamer_id: string
           theme?: string | null
+          webhook_url?: string | null
+          widget_position?: string | null
         }
         Update: {
+          email_notifications?: boolean | null
+          milestone_amount_cents?: number | null
+          notify_on_milestone?: boolean | null
           overlay_image_duration_seconds?: number | null
           show_prices?: boolean | null
           streamer_id?: string
           theme?: string | null
+          webhook_url?: string | null
+          widget_position?: string | null
         }
         Relationships: [
           {

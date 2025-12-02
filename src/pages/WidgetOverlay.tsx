@@ -15,6 +15,7 @@ const WidgetOverlay = () => {
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [currentAlert, setCurrentAlert] = useState<any>(null);
   const [duration, setDuration] = useState(5);
+  const [widgetPosition, setWidgetPosition] = useState("center");
 
   // Set transparent background for widget
   useEffect(() => {
@@ -46,12 +47,15 @@ const WidgetOverlay = () => {
         // Load settings
         const { data: settings } = await supabase
           .from("settings")
-          .select("overlay_image_duration_seconds")
+          .select("overlay_image_duration_seconds, widget_position")
           .eq("streamer_id", streamer.id)
           .single();
         
         if (settings?.overlay_image_duration_seconds) {
           setDuration(settings.overlay_image_duration_seconds);
+        }
+        if (settings?.widget_position) {
+          setWidgetPosition(settings.widget_position);
         }
       }
     };
@@ -157,8 +161,23 @@ const WidgetOverlay = () => {
     setCurrentAlert(null);
   };
 
+  const getPositionClasses = () => {
+    const positions: Record<string, string> = {
+      "top-left": "items-start justify-start",
+      "top-center": "items-start justify-center",
+      "top-right": "items-start justify-end",
+      "center-left": "items-center justify-start",
+      "center": "items-center justify-center",
+      "center-right": "items-center justify-end",
+      "bottom-left": "items-end justify-start",
+      "bottom-center": "items-end justify-center",
+      "bottom-right": "items-end justify-end",
+    };
+    return positions[widgetPosition] || "items-center justify-center";
+  };
+
   return (
-    <div className="fixed inset-0 bg-transparent">
+    <div className={`fixed inset-0 bg-transparent flex p-4 ${getPositionClasses()}`}>
       {currentAlert && (
         <AlertPlayer
           alert={currentAlert}

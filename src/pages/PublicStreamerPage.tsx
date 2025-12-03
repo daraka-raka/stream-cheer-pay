@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -10,11 +10,12 @@ import { Label } from "@/components/ui/label";
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Music, Image as ImageIcon, Video, AlertCircle } from "lucide-react";
-import { useState } from "react";
+import { ArrowLeft, Music, Image as ImageIcon, Video, AlertCircle, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
 
 const PublicStreamerPage = () => {
   const { handle } = useParams<{ handle: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
   // Remove @ prefix if present
   const cleanHandle = handle?.startsWith('@') ? handle.slice(1) : handle;
   console.debug('[PublicStreamerPage] raw handle:', handle);
@@ -25,6 +26,34 @@ const PublicStreamerPage = () => {
   const [purchaseModalOpen, setPurchaseModalOpen] = useState(false);
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [transactionId, setTransactionId] = useState<string | null>(null);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+
+  // Handle payment return from Mercado Pago
+  useEffect(() => {
+    const paymentStatus = searchParams.get("payment");
+    if (paymentStatus) {
+      if (paymentStatus === "success") {
+        toast({
+          title: "Pagamento realizado!",
+          description: "Seu alerta foi adicionado à fila do streamer. Obrigado!",
+        });
+      } else if (paymentStatus === "failure") {
+        toast({
+          title: "Pagamento não concluído",
+          description: "O pagamento foi cancelado ou falhou. Tente novamente.",
+          variant: "destructive",
+        });
+      } else if (paymentStatus === "pending") {
+        toast({
+          title: "Pagamento pendente",
+          description: "Seu pagamento está sendo processado. O alerta será exibido após a confirmação.",
+        });
+      }
+      // Clear the payment param from URL
+      searchParams.delete("payment");
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const { data: streamer, isLoading: streamerLoading } = useQuery({
     queryKey: ["public-streamer", cleanHandle],
@@ -67,6 +96,8 @@ const PublicStreamerPage = () => {
   const handlePurchase = async () => {
     if (!selectedAlert || !streamer) return;
 
+    setIsProcessingPayment(true);
+
     try {
       const { data: transaction, error } = await supabase
         .from("transactions")
@@ -84,14 +115,48 @@ const PublicStreamerPage = () => {
       if (error) throw error;
 
       setTransactionId(transaction.id);
-      setPurchaseModalOpen(false);
-      setPaymentDialogOpen(true);
+
+      // If test mode, show test payment dialog
+      if (selectedAlert.test_mode) {
+        setPurchaseModalOpen(false);
+        setPaymentDialogOpen(true);
+        setIsProcessingPayment(false);
+        return;
+      }
+
+      // For real payments, create Mercado Pago preference
+      const { data: preferenceData, error: prefError } = await supabase.functions.invoke(
+        "create-preference",
+        {
+          body: {
+            transaction_id: transaction.id,
+            alert_title: selectedAlert.title,
+            amount_cents: selectedAlert.price_cents,
+            streamer_handle: cleanHandle,
+          },
+        }
+      );
+
+      if (prefError) throw prefError;
+
+      if (preferenceData?.error) {
+        throw new Error(preferenceData.error);
+      }
+
+      // Redirect to Mercado Pago checkout
+      if (preferenceData?.init_point) {
+        window.location.href = preferenceData.init_point;
+      } else {
+        throw new Error("Não foi possível criar a preferência de pagamento");
+      }
     } catch (error: any) {
+      console.error("[PublicStreamerPage] Purchase error:", error);
       toast({
-        title: "Erro ao criar transação",
+        title: "Erro ao processar compra",
         description: error.message,
         variant: "destructive",
       });
+      setIsProcessingPayment(false);
     }
   };
 
@@ -377,11 +442,18 @@ const PublicStreamerPage = () => {
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setPurchaseModalOpen(false)}>
+            <Button variant="outline" onClick={() => setPurchaseModalOpen(false)} disabled={isProcessingPayment}>
               Cancelar
             </Button>
-            <Button onClick={handlePurchase} variant="hero">
-              Comprar R$ {selectedAlert && (selectedAlert.price_cents / 100).toFixed(2)}
+            <Button onClick={handlePurchase} variant="hero" disabled={isProcessingPayment}>
+              {isProcessingPayment ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processando...
+                </>
+              ) : (
+                `Comprar R$ ${selectedAlert && (selectedAlert.price_cents / 100).toFixed(2)}`
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

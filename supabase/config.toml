@@ -5,3 +5,9 @@ project_id = "qbyezofoygfeqxvtfhby"
 enable_password_strength = true
 min_length = 8
 enable_hibp = true  # Have I Been Pwned integration
+
+[functions.create-preference]
+verify_jwt = false
+
+[functions.mercadopago-webhook]
+verify_jwt = false

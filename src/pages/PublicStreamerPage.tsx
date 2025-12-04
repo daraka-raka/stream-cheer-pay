@@ -5,13 +5,18 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Music, Image as ImageIcon, Video, AlertCircle, Loader2 } from "lucide-react";
+import { ArrowLeft, Music, Image as ImageIcon, Video, AlertCircle, Loader2, Copy, CheckCircle2, Clock } from "lucide-react";
 import { useState, useEffect } from "react";
+
+interface PixData {
+  qr_code_base64: string;
+  qr_code: string;
+  expires_at: string;
+  payment_id: number;
+}
 
 const PublicStreamerPage = () => {
   const { handle } = useParams<{ handle: string }>();
@@ -22,11 +27,14 @@ const PublicStreamerPage = () => {
   console.debug('[PublicStreamerPage] clean handle:', cleanHandle);
   const navigate = useNavigate();
   const [selectedAlert, setSelectedAlert] = useState<any>(null);
-  const [buyerMessage, setBuyerMessage] = useState("");
   const [purchaseModalOpen, setPurchaseModalOpen] = useState(false);
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [transactionId, setTransactionId] = useState<string | null>(null);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [pixData, setPixData] = useState<PixData | null>(null);
+  const [pixModalOpen, setPixModalOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [timeLeft, setTimeLeft] = useState<string>("");
 
   // Handle payment return from Mercado Pago
   useEffect(() => {
@@ -54,6 +62,31 @@ const PublicStreamerPage = () => {
       setSearchParams(searchParams, { replace: true });
     }
   }, [searchParams, setSearchParams]);
+
+  // Timer for PIX expiration
+  useEffect(() => {
+    if (!pixData?.expires_at || !pixModalOpen) return;
+
+    const updateTimer = () => {
+      const now = new Date().getTime();
+      const expiresAt = new Date(pixData.expires_at).getTime();
+      const diff = expiresAt - now;
+
+      if (diff <= 0) {
+        setTimeLeft("Expirado");
+        return;
+      }
+
+      const minutes = Math.floor(diff / 60000);
+      const seconds = Math.floor((diff % 60000) / 1000);
+      setTimeLeft(`${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+
+    return () => clearInterval(interval);
+  }, [pixData?.expires_at, pixModalOpen]);
 
   const { data: streamer, isLoading: streamerLoading } = useQuery({
     queryKey: ["public-streamer", cleanHandle],
@@ -105,7 +138,6 @@ const PublicStreamerPage = () => {
           streamer_id: streamer.id,
           alert_id: selectedAlert.id,
           amount_cents: selectedAlert.price_cents,
-          buyer_note: buyerMessage || null,
           status: "pending",
           currency: "BRL",
         })
@@ -124,9 +156,9 @@ const PublicStreamerPage = () => {
         return;
       }
 
-      // For real payments, create Mercado Pago preference
-      const { data: preferenceData, error: prefError } = await supabase.functions.invoke(
-        "create-preference",
+      // For real payments, create PIX payment
+      const { data: pixResponse, error: pixError } = await supabase.functions.invoke(
+        "create-pix-payment",
         {
           body: {
             transaction_id: transaction.id,
@@ -137,18 +169,17 @@ const PublicStreamerPage = () => {
         }
       );
 
-      if (prefError) throw prefError;
+      if (pixError) throw pixError;
 
-      if (preferenceData?.error) {
-        throw new Error(preferenceData.error);
+      if (pixResponse?.error) {
+        throw new Error(pixResponse.error);
       }
 
-      // Redirect to Mercado Pago checkout
-      if (preferenceData?.init_point) {
-        window.location.href = preferenceData.init_point;
-      } else {
-        throw new Error("Não foi possível criar a preferência de pagamento");
-      }
+      // Show PIX modal with QR code
+      setPixData(pixResponse);
+      setPurchaseModalOpen(false);
+      setPixModalOpen(true);
+      setIsProcessingPayment(false);
     } catch (error: any) {
       console.error("[PublicStreamerPage] Purchase error:", error);
       toast({
@@ -180,7 +211,7 @@ const PublicStreamerPage = () => {
           streamer_id: streamer!.id,
           status: "queued",
           is_test: true,
-          payload: { buyer_note: buyerMessage },
+          payload: {},
         });
 
       if (queueError) throw queueError;
@@ -191,7 +222,6 @@ const PublicStreamerPage = () => {
       });
 
       setPaymentDialogOpen(false);
-      setBuyerMessage("");
       setTransactionId(null);
       setSelectedAlert(null);
     } catch (error: any) {
@@ -201,6 +231,33 @@ const PublicStreamerPage = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleCopyPixCode = async () => {
+    if (!pixData?.qr_code) return;
+
+    try {
+      await navigator.clipboard.writeText(pixData.qr_code);
+      setCopied(true);
+      toast({
+        title: "Código copiado!",
+        description: "Cole no app do seu banco para pagar.",
+      });
+      setTimeout(() => setCopied(false), 3000);
+    } catch (error) {
+      toast({
+        title: "Erro ao copiar",
+        description: "Não foi possível copiar o código.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleClosePixModal = () => {
+    setPixModalOpen(false);
+    setPixData(null);
+    setSelectedAlert(null);
+    setTransactionId(null);
   };
 
   const getMediaIcon = (type: string) => {
@@ -425,20 +482,6 @@ const PublicStreamerPage = () => {
                   R$ {(selectedAlert.price_cents / 100).toFixed(2)}
                 </span>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="buyer-message">Mensagem (opcional)</Label>
-                <Textarea
-                  id="buyer-message"
-                  placeholder="Deixe uma mensagem para o streamer (máx. 200 caracteres)"
-                  maxLength={200}
-                  value={buyerMessage}
-                  onChange={(e) => setBuyerMessage(e.target.value)}
-                  className="resize-none"
-                />
-                <p className="text-xs text-muted-foreground text-right">
-                  {buyerMessage.length}/200
-                </p>
-              </div>
             </div>
           )}
           <DialogFooter>
@@ -449,59 +492,105 @@ const PublicStreamerPage = () => {
               {isProcessingPayment ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Processando...
+                  Gerando PIX...
                 </>
               ) : (
-                `Comprar R$ ${selectedAlert && (selectedAlert.price_cents / 100).toFixed(2)}`
+                `Pagar com PIX - R$ ${selectedAlert && (selectedAlert.price_cents / 100).toFixed(2)}`
               )}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Payment Dialog - Test Mode or Stripe Required */}
+      {/* PIX Payment Modal */}
+      <Dialog open={pixModalOpen} onOpenChange={handleClosePixModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse" />
+              Pagamento PIX
+            </DialogTitle>
+            <DialogDescription>
+              Escaneie o QR code ou copie o código para pagar
+            </DialogDescription>
+          </DialogHeader>
+          
+          {pixData && (
+            <div className="space-y-6">
+              {/* QR Code */}
+              <div className="flex justify-center">
+                <div className="p-4 bg-white rounded-lg">
+                  <img
+                    src={`data:image/png;base64,${pixData.qr_code_base64}`}
+                    alt="QR Code PIX"
+                    className="w-48 h-48"
+                  />
+                </div>
+              </div>
+
+              {/* Copy Code Section */}
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground text-center">
+                  Ou copie o código abaixo:
+                </p>
+                <div className="flex gap-2">
+                  <div className="flex-1 p-3 bg-muted rounded-md text-xs font-mono break-all max-h-20 overflow-y-auto">
+                    {pixData.qr_code}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={handleCopyPixCode}
+                    className="shrink-0"
+                  >
+                    {copied ? (
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Timer */}
+              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                <Clock className="h-4 w-4" />
+                <span>Expira em: <strong className={timeLeft === "Expirado" ? "text-destructive" : "text-foreground"}>{timeLeft}</strong></span>
+              </div>
+
+              {/* Instructions */}
+              <div className="text-center text-sm text-muted-foreground space-y-1">
+                <p>1. Abra o app do seu banco</p>
+                <p>2. Escolha pagar com PIX</p>
+                <p>3. Escaneie o QR code ou cole o código</p>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={handleClosePixModal} className="w-full">
+              Fechar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Payment Dialog - Test Mode */}
       <AlertDialog open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              {selectedAlert?.test_mode ? "🧪 Pagamento de Teste" : "⚠️ Pagamentos Desabilitados"}
-            </AlertDialogTitle>
+            <AlertDialogTitle>🧪 Pagamento de Teste</AlertDialogTitle>
             <AlertDialogDescription>
-              {selectedAlert?.test_mode 
-                ? "Este alerta está em modo de teste. Você pode simular um pagamento sem custos reais. Em produção, esta funcionalidade seria substituída pela integração com Stripe."
-                : "A funcionalidade de pagamento está temporariamente desabilitada por questões de segurança. A integração com gateway de pagamento (Stripe) precisa ser configurada antes de aceitar pagamentos reais."
-              }
+              Este alerta está em modo de teste. Você pode simular um pagamento sem custos reais. Em produção, será usada a integração com Mercado Pago.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <div className="py-6 space-y-4">
-            <div className="bg-muted rounded-lg p-8 flex items-center justify-center">
-              <div className="text-center space-y-2">
-                <div className="text-6xl">{selectedAlert?.test_mode ? "🧪" : "🚧"}</div>
-                <p className="text-sm text-muted-foreground">
-                  {selectedAlert?.test_mode ? "Modo de Teste Ativo" : "Sistema de Pagamento em Configuração"}
-                </p>
-                <p className="text-lg font-bold">
-                  R$ {selectedAlert && (selectedAlert.price_cents / 100).toFixed(2)}
-                </p>
-              </div>
-            </div>
-            {!selectedAlert?.test_mode && (
-              <div className="bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-                <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                  <strong>Para o Streamer:</strong> Configure a integração com Stripe nas configurações para aceitar pagamentos reais e seguros.
-                </p>
-              </div>
-            )}
-          </div>
           <AlertDialogFooter>
             <Button variant="outline" onClick={() => setPaymentDialogOpen(false)}>
-              {selectedAlert?.test_mode ? "Cancelar" : "Entendi"}
+              Cancelar
             </Button>
-            {selectedAlert?.test_mode && (
-              <Button onClick={handleConfirmTestPayment} variant="hero">
-                Confirmar Pagamento de Teste
-              </Button>
-            )}
+            <Button onClick={handleConfirmTestPayment}>
+              Confirmar Pagamento de Teste
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

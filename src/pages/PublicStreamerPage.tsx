@@ -132,21 +132,23 @@ const PublicStreamerPage = () => {
     setIsProcessingPayment(true);
 
     try {
-      const { data: transaction, error } = await supabase
+      // Generate UUID on frontend to avoid needing SELECT permission after INSERT
+      const newTransactionId = crypto.randomUUID();
+
+      const { error } = await supabase
         .from("transactions")
         .insert({
+          id: newTransactionId,
           streamer_id: streamer.id,
           alert_id: selectedAlert.id,
           amount_cents: selectedAlert.price_cents,
           status: "pending",
           currency: "BRL",
-        })
-        .select()
-        .single();
+        });
 
       if (error) throw error;
 
-      setTransactionId(transaction.id);
+      setTransactionId(newTransactionId);
 
       // If test mode, show test payment dialog
       if (selectedAlert.test_mode) {
@@ -161,7 +163,7 @@ const PublicStreamerPage = () => {
         "create-pix-payment",
         {
           body: {
-            transaction_id: transaction.id,
+            transaction_id: newTransactionId,
             alert_title: selectedAlert.title,
             amount_cents: selectedAlert.price_cents,
             streamer_handle: cleanHandle,

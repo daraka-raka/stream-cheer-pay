@@ -309,7 +309,7 @@ const Dashboard = () => {
     toast.success(`${label} copiado!`);
   };
 
-  const widgetUrl = `${window.location.origin}/widget/${streamer?.public_key}`;
+  const widgetUrl = `${window.location.origin}/overlay.html?key=${streamer?.public_key}`;
   const publicUrl = `${window.location.origin}/${streamer?.handle}`;
 
   return (

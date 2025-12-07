@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Streala - Alert Overlay</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      background: transparent;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    }
+    
+    #overlay-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+    
+    #alert-display {
+      display: none;
+      max-width: 90vw;
+      max-height: 90vh;
+    }
+    
+    #alert-display.active {
+      display: block;
+      animation: fadeInScale 0.5s ease-out forwards;
+    }
+    
+    #alert-display.hiding {
+      animation: fadeOutScale 0.5s ease-out forwards;
+    }
+    
+    #alert-media {
+      max-width: 100%;
+      max-height: 80vh;
+      border-radius: 12px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+    
+    #alert-title {
+      text-align: center;
+      color: #fff;
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-top: 1rem;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    }
+    
+    #buyer-note {
+      text-align: center;
+      color: #fff;
+      font-size: 1.1rem;
+      margin-top: 0.5rem;
+      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7);
+      font-style: italic;
+    }
+    
+    #debug-info {
+      position: fixed;
+      bottom: 10px;
+      left: 10px;
+      color: rgba(255, 255, 255, 0.3);
+      font-size: 10px;
+      font-family: monospace;
+    }
+    
+    @keyframes fadeInScale {
+      0% {
+        opacity: 0;
+        transform: scale(0.8);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+    
+    @keyframes fadeOutScale {
+      0% {
+        opacity: 1;
+        transform: scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: scale(0.8);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="overlay-container">
+    <div id="alert-display">
+      <img id="alert-media" src="" alt="Alert" style="display: none;" />
+      <video id="alert-video" src="" autoplay style="display: none;"></video>
+      <audio id="alert-audio" src="" style="display: none;"></audio>
+      <p id="alert-title"></p>
+      <p id="buyer-note"></p>
+    </div>
+  </div>
+  <div id="debug-info">Conectando...</div>
+
+  <!-- Supabase JS SDK via CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  
+  <script>
+    // Configuration
+    const SUPABASE_URL = 'https://qbyezofoygfeqxvtfhby.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFieWV6b2ZveWdmZXF4dnRmaGJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2MzEzMDQsImV4cCI6MjA3NjIwNzMwNH0.tt1G3MqON8aw4HORUzar2re0Ly1M5lZ45lcLtNSxNjs';
+    
+    // Get public_key from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const publicKey = urlParams.get('key');
+    
+    const debugEl = document.getElementById('debug-info');
+    const alertDisplay = document.getElementById('alert-display');
+    const alertMedia = document.getElementById('alert-media');
+    const alertVideo = document.getElementById('alert-video');
+    const alertAudio = document.getElementById('alert-audio');
+    const alertTitle = document.getElementById('alert-title');
+    const buyerNote = document.getElementById('buyer-note');
+    
+    let streamerId = null;
+    let alertQueue = [];
+    let isPlaying = false;
+    let supabaseClient = null;
+    let defaultDuration = 5000; // 5 seconds default
+    
+    function log(msg) {
+      console.log('[Overlay]', msg);
+      debugEl.textContent = msg;
+    }
+    
+    async function init() {
+      if (!publicKey) {
+        log('Erro: ?key= não especificada na URL');
+        return;
+      }
+      
+      log('Inicializando com key: ' + publicKey.substring(0, 8) + '...');
+      
+      // Initialize Supabase
+      supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      
+      // Get streamer by public_key
+      const { data: streamer, error } = await supabaseClient
+        .from('streamers')
+        .select('id')
+        .eq('public_key', publicKey)
+        .single();
+      
+      if (error || !streamer) {
+        log('Erro: Streamer não encontrado');
+        console.error(error);
+        return;
+      }
+      
+      streamerId = streamer.id;
+      log('Streamer encontrado! Conectando realtime...');
+      
+      // Load settings for duration
+      const { data: settings } = await supabaseClient
+        .from('settings')
+        .select('overlay_image_duration_seconds')
+        .eq('streamer_id', streamerId)
+        .single();
+      
+      if (settings?.overlay_image_duration_seconds) {
+        defaultDuration = settings.overlay_image_duration_seconds * 1000;
+      }
+      
+      // Load existing queued items
+      await loadQueuedItems();
+      
+      // Subscribe to realtime changes
+      subscribeToQueue();
+      
+      log('Pronto! Aguardando alertas...');
+    }
+    
+    async function loadQueuedItems() {
+      const { data: items, error } = await supabaseClient
+        .from('alert_queue')
+        .select(`
+          id,
+          alert_id,
+          status,
+          payload,
+          alerts (
+            title,
+            media_type,
+            media_path
+          )
+        `)
+        .eq('streamer_id', streamerId)
+        .eq('status', 'queued')
+        .order('enqueued_at', { ascending: true });
+      
+      if (error) {
+        console.error('Error loading queue:', error);
+        return;
+      }
+      
+      if (items && items.length > 0) {
+        log(`Carregou ${items.length} alertas na fila`);
+        items.forEach(item => {
+          if (!alertQueue.find(q => q.id === item.id)) {
+            alertQueue.push(item);
+          }
+        });
+        processQueue();
+      }
+    }
+    
+    function subscribeToQueue() {
+      const channel = supabaseClient
+        .channel('alert-queue-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'alert_queue',
+            filter: `streamer_id=eq.${streamerId}`
+          },
+          async (payload) => {
+            log('Novo alerta recebido!');
+            console.log('New queue item:', payload);
+            
+            // Fetch full alert data
+            const { data: queueItem } = await supabaseClient
+              .from('alert_queue')
+              .select(`
+                id,
+                alert_id,
+                status,
+                payload,
+                alerts (
+                  title,
+                  media_type,
+                  media_path
+                )
+              `)
+              .eq('id', payload.new.id)
+              .single();
+            
+            if (queueItem && queueItem.status === 'queued') {
+              alertQueue.push(queueItem);
+              processQueue();
+            }
+          }
+        )
+        .subscribe((status) => {
+          log('Realtime: ' + status);
+        });
+    }
+    
+    async function processQueue() {
+      if (isPlaying || alertQueue.length === 0) {
+        return;
+      }
+      
+      isPlaying = true;
+      const item = alertQueue.shift();
+      
+      log('Tocando: ' + item.alerts.title);
+      
+      // Update status to playing
+      await supabaseClient
+        .from('alert_queue')
+        .update({ status: 'playing', started_at: new Date().toISOString() })
+        .eq('id', item.id);
+      
+      // Show the alert
+      await showAlert(item);
+      
+      // Update status to finished
+      await supabaseClient
+        .from('alert_queue')
+        .update({ status: 'finished', finished_at: new Date().toISOString() })
+        .eq('id', item.id);
+      
+      isPlaying = false;
+      log('Aguardando alertas...');
+      
+      // Process next item
+      if (alertQueue.length > 0) {
+        setTimeout(() => processQueue(), 500);
+      }
+    }
+    
+    function showAlert(item) {
+      return new Promise((resolve) => {
+        const alert = item.alerts;
+        const payload = item.payload || {};
+        const mediaUrl = `${SUPABASE_URL}/storage/v1/object/public/alerts/${alert.media_path}`;
+        
+        // Reset display
+        alertMedia.style.display = 'none';
+        alertVideo.style.display = 'none';
+        alertAudio.style.display = 'none';
+        alertDisplay.classList.remove('hiding');
+        
+        // Set title and buyer note
+        alertTitle.textContent = alert.title;
+        buyerNote.textContent = payload.buyer_note || '';
+        
+        let duration = defaultDuration;
+        
+        if (alert.media_type === 'video') {
+          alertVideo.src = mediaUrl;
+          alertVideo.style.display = 'block';
+          alertVideo.style.maxWidth = '100%';
+          alertVideo.style.maxHeight = '80vh';
+          alertVideo.style.borderRadius = '12px';
+          alertVideo.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.5)';
+          
+          alertVideo.onloadedmetadata = () => {
+            duration = alertVideo.duration * 1000;
+          };
+          
+          alertVideo.onended = () => {
+            hideAlert(resolve);
+          };
+          
+          alertVideo.play().catch(console.error);
+          alertDisplay.classList.add('active');
+          
+        } else if (alert.media_type === 'audio') {
+          // For audio, show a placeholder or just the title
+          alertMedia.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="%23a855f7"/><path d="M40 35v30l25-15z" fill="white"/></svg>';
+          alertMedia.style.display = 'block';
+          alertMedia.style.width = '150px';
+          alertMedia.style.height = '150px';
+          
+          alertAudio.src = mediaUrl;
+          alertAudio.onended = () => {
+            hideAlert(resolve);
+          };
+          alertAudio.play().catch(console.error);
+          alertDisplay.classList.add('active');
+          
+        } else {
+          // Image
+          alertMedia.src = mediaUrl;
+          alertMedia.style.display = 'block';
+          alertDisplay.classList.add('active');
+          
+          setTimeout(() => {
+            hideAlert(resolve);
+          }, duration);
+        }
+      });
+    }
+    
+    function hideAlert(resolve) {
+      alertDisplay.classList.add('hiding');
+      alertDisplay.classList.remove('active');
+      
+      setTimeout(() => {
+        alertDisplay.classList.remove('hiding');
+        alertMedia.style.display = 'none';
+        alertVideo.style.display = 'none';
+        alertVideo.pause();
+        alertVideo.src = '';
+        alertAudio.pause();
+        alertAudio.src = '';
+        resolve();
+      }, 500);
+    }
+    
+    // Initialize on load
+    window.addEventListener('load', init);
+  </script>
+</body>
+</html>

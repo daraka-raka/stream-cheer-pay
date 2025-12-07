@@ -338,7 +338,7 @@ export default function Settings() {
               <div className="flex gap-2 mt-1">
                 <Input
                   readOnly
-                  value={`${window.location.origin}/widget/${streamer?.public_key || "sua-chave"}`}
+                  value={`${window.location.origin}/overlay.html?key=${streamer?.public_key || "sua-chave"}`}
                   className="font-mono text-sm"
                 />
                 <Button
@@ -346,7 +346,7 @@ export default function Settings() {
                   size="icon"
                   onClick={() =>
                     copyToClipboard(
-                      `${window.location.origin}/widget/${streamer?.public_key}`,
+                      `${window.location.origin}/overlay.html?key=${streamer?.public_key}`,
                       "Widget URL"
                     )
                   }

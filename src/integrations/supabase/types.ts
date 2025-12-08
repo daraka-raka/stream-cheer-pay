@@ -192,6 +192,7 @@ export type Database = {
       }
       settings: {
         Row: {
+          accepting_alerts: boolean | null
           email_notifications: boolean | null
           milestone_amount_cents: number | null
           notify_on_milestone: boolean | null
@@ -203,6 +204,7 @@ export type Database = {
           widget_position: string | null
         }
         Insert: {
+          accepting_alerts?: boolean | null
           email_notifications?: boolean | null
           milestone_amount_cents?: number | null
           notify_on_milestone?: boolean | null
@@ -214,6 +216,7 @@ export type Database = {
           widget_position?: string | null
         }
         Update: {
+          accepting_alerts?: boolean | null
           email_notifications?: boolean | null
           milestone_amount_cents?: number | null
           notify_on_milestone?: boolean | null
@@ -426,6 +429,7 @@ export type Database = {
     Views: {
       public_streamer_profiles: {
         Row: {
+          accepting_alerts: boolean | null
           bio: string | null
           created_at: string | null
           display_name: string | null
@@ -434,26 +438,6 @@ export type Database = {
           photo_url: string | null
           public_key: string | null
           updated_at: string | null
-        }
-        Insert: {
-          bio?: string | null
-          created_at?: string | null
-          display_name?: string | null
-          handle?: string | null
-          id?: string | null
-          photo_url?: string | null
-          public_key?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          bio?: string | null
-          created_at?: string | null
-          display_name?: string | null
-          handle?: string | null
-          id?: string | null
-          photo_url?: string | null
-          public_key?: string | null
-          updated_at?: string | null
         }
         Relationships: []
       }

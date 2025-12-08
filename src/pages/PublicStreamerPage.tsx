@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Music, Image as ImageIcon, Video, AlertCircle, Loader2, Copy, CheckCircle2, Clock } from "lucide-react";
+import { ArrowLeft, Music, Image as ImageIcon, Video, AlertCircle, Loader2, Copy, CheckCircle2, Clock, PauseCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 
 interface PixData {
@@ -388,6 +388,17 @@ const PublicStreamerPage = () => {
           </div>
         </div>
 
+        {/* Not Accepting Alerts Banner */}
+        {streamer.accepting_alerts === false && (
+          <div className="flex items-center gap-3 p-4 rounded-lg border border-yellow-500/50 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400">
+            <PauseCircle className="h-6 w-6 flex-shrink-0" />
+            <div>
+              <p className="font-medium">Este streamer não está aceitando alertas no momento</p>
+              <p className="text-sm opacity-80">Volte mais tarde para ver os alertas disponíveis.</p>
+            </div>
+          </div>
+        )}
+
         {/* Alerts Gallery */}
         {alertsLoading ? (
           <div className="text-center py-12">
@@ -399,11 +410,17 @@ const PublicStreamerPage = () => {
             {alerts.map((alert) => {
                   const thumbUrl = alert.thumb_path || alert.media_path;
 
+              const isDisabled = streamer.accepting_alerts === false;
+
               return (
                 <Card
                   key={alert.id}
-                  className="cursor-pointer hover:shadow-glow transition-all duration-300 hover:scale-105 relative"
-                  onClick={() => handleAlertClick(alert)}
+                  className={`transition-all duration-300 relative ${
+                    isDisabled 
+                      ? 'opacity-60 cursor-not-allowed' 
+                      : 'cursor-pointer hover:shadow-glow hover:scale-105'
+                  }`}
+                  onClick={() => !isDisabled && handleAlertClick(alert)}
                 >
                   <CardHeader className="p-0">
                     <div className="aspect-video relative overflow-hidden rounded-t-lg">

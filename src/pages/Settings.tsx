@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Copy, CheckCircle, AlertCircle, Upload, Webhook, Mail, Layout } from "lucide-react";
+import { Copy, CheckCircle, AlertCircle, Upload, Webhook, Mail, Layout, Pause, Play } from "lucide-react";
 import { toast } from "sonner";
 import { useTheme } from "next-themes";
 import { supabase } from "@/integrations/supabase/client";
@@ -42,6 +42,7 @@ export default function Settings() {
   const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
   
   // Advanced preferences
+  const [acceptingAlerts, setAcceptingAlerts] = useState(true);
   const [webhookUrl, setWebhookUrl] = useState("");
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [notifyOnMilestone, setNotifyOnMilestone] = useState(false);
@@ -65,6 +66,7 @@ export default function Settings() {
   useEffect(() => {
     if (settings) {
       setImageDuration(settings.overlay_image_duration_seconds || 5);
+      setAcceptingAlerts(settings.accepting_alerts ?? true);
       setWebhookUrl(settings.webhook_url || "");
       setEmailNotifications(settings.email_notifications ?? true);
       setNotifyOnMilestone(settings.notify_on_milestone ?? false);
@@ -215,6 +217,7 @@ export default function Settings() {
         .upsert({
           streamer_id: streamer.id,
           overlay_image_duration_seconds: imageDuration,
+          accepting_alerts: acceptingAlerts,
           theme: theme || "system",
           webhook_url: webhookUrl.trim() || null,
           email_notifications: emailNotifications,
@@ -249,6 +252,50 @@ export default function Settings() {
             Gerencie seu perfil e preferências
           </p>
         </div>
+
+        {/* Aceitar Alertas */}
+        <Card className={`p-6 ${!acceptingAlerts ? 'border-yellow-500/50 bg-yellow-500/5' : ''}`}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {acceptingAlerts ? (
+                <Play className="h-5 w-5 text-green-500" />
+              ) : (
+                <Pause className="h-5 w-5 text-yellow-500" />
+              )}
+              <div>
+                <h2 className="text-lg font-semibold">Aceitar Alertas</h2>
+                <p className="text-sm text-muted-foreground">
+                  {acceptingAlerts 
+                    ? "Sua página está aceitando compras de alertas" 
+                    : "Viewers não podem comprar alertas no momento"}
+                </p>
+              </div>
+            </div>
+            <Switch
+              checked={acceptingAlerts}
+              onCheckedChange={(checked) => {
+                setAcceptingAlerts(checked);
+                // Auto-save this setting immediately
+                if (streamer) {
+                  supabase
+                    .from("settings")
+                    .upsert({
+                      streamer_id: streamer.id,
+                      accepting_alerts: checked,
+                    })
+                    .then(({ error }) => {
+                      if (error) {
+                        toast.error("Erro ao salvar configuração");
+                        setAcceptingAlerts(!checked);
+                      } else {
+                        toast.success(checked ? "Alertas ativados!" : "Alertas pausados!");
+                      }
+                    });
+                }
+              }}
+            />
+          </div>
+        </Card>
 
         {/* Perfil do Streamer */}
         <Card className="p-6">

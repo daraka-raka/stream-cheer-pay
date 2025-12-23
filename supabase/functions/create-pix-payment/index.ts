@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -9,6 +10,7 @@ interface PixPaymentRequest {
   transaction_id: string;
   alert_title: string;
   amount_cents: number;
+  streamer_id: string;
   streamer_handle: string;
   payer_email?: string;
 }
@@ -23,24 +25,58 @@ serve(async (req) => {
     const body: PixPaymentRequest = await req.json();
     console.log("[create-pix-payment] Request body:", JSON.stringify(body));
 
-    const { transaction_id, alert_title, amount_cents, streamer_handle, payer_email } = body;
+    const { transaction_id, alert_title, amount_cents, streamer_id, streamer_handle, payer_email } = body;
 
-    if (!transaction_id || !alert_title || !amount_cents) {
-      throw new Error("Missing required fields: transaction_id, alert_title, amount_cents");
+    if (!transaction_id || !alert_title || !amount_cents || !streamer_id) {
+      throw new Error("Missing required fields: transaction_id, alert_title, amount_cents, streamer_id");
     }
 
-    const mercadoPagoToken = Deno.env.get("MERCADOPAGO_ACCESS_TOKEN");
-    if (!mercadoPagoToken) {
-      throw new Error("MERCADOPAGO_ACCESS_TOKEN not configured");
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Fetch streamer's Mercado Pago config
+    const { data: mpConfig, error: configError } = await supabase
+      .from("streamer_mp_config")
+      .select("mp_access_token, commission_rate, token_expires_at")
+      .eq("streamer_id", streamer_id)
+      .single();
+
+    let accessToken: string;
+    let commissionRate: number;
+
+    if (configError || !mpConfig) {
+      // Fallback to platform token if streamer hasn't connected MP
+      console.log("[create-pix-payment] Using platform token (streamer not connected)");
+      const platformToken = Deno.env.get("MERCADOPAGO_ACCESS_TOKEN");
+      if (!platformToken) {
+        throw new Error("Streamer não conectou Mercado Pago e token da plataforma não configurado");
+      }
+      accessToken = platformToken;
+      commissionRate = 0; // No split if using platform token
+    } else {
+      console.log("[create-pix-payment] Using streamer's token");
+      accessToken = mpConfig.mp_access_token;
+      commissionRate = mpConfig.commission_rate || 0.10;
+
+      // Check if token might be expired (optional: implement refresh logic)
+      if (mpConfig.token_expires_at && new Date(mpConfig.token_expires_at) < new Date()) {
+        console.warn("[create-pix-payment] Token may be expired, attempting to use anyway");
+        // TODO: Implement token refresh logic here if needed
+      }
     }
 
     // Get the base URL for webhook
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const webhookUrl = `${supabaseUrl}/functions/v1/mercadopago-webhook`;
 
-    // Create PIX payment via Mercado Pago Payments API
-    const paymentPayload = {
-      transaction_amount: amount_cents / 100,
+    // Calculate application fee (platform commission)
+    const transactionAmountReais = amount_cents / 100;
+    const applicationFee = commissionRate > 0 ? Math.round(transactionAmountReais * commissionRate * 100) / 100 : 0;
+
+    // Create PIX payment payload
+    const paymentPayload: Record<string, unknown> = {
+      transaction_amount: transactionAmountReais,
       description: `Alerta: ${alert_title} - @${streamer_handle}`,
       payment_method_id: "pix",
       payer: {
@@ -50,12 +86,18 @@ serve(async (req) => {
       notification_url: webhookUrl,
     };
 
+    // Add application_fee only if using streamer's token (marketplace split)
+    if (commissionRate > 0 && applicationFee > 0) {
+      paymentPayload.application_fee = applicationFee;
+      console.log("[create-pix-payment] Application fee (commission):", applicationFee);
+    }
+
     console.log("[create-pix-payment] Creating PIX payment:", JSON.stringify(paymentPayload));
 
     const response = await fetch("https://api.mercadopago.com/v1/payments", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${mercadoPagoToken}`,
+        "Authorization": `Bearer ${accessToken}`,
         "Content-Type": "application/json",
         "X-Idempotency-Key": transaction_id,
       },
@@ -92,6 +134,7 @@ serve(async (req) => {
     console.log("[create-pix-payment] PIX payment created successfully:", {
       payment_id: result.payment_id,
       expires_at: result.expires_at,
+      commission_applied: applicationFee,
     });
 
     return new Response(JSON.stringify(result), {

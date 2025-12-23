@@ -48,6 +48,8 @@ export default function Settings() {
   const [notifyOnMilestone, setNotifyOnMilestone] = useState(false);
   const [milestoneAmount, setMilestoneAmount] = useState(1000);
   const [widgetPosition, setWidgetPosition] = useState("center");
+  const [alertStartDelay, setAlertStartDelay] = useState(0);
+  const [alertBetweenDelay, setAlertBetweenDelay] = useState(1);
 
   useEffect(() => {
     if (user) {
@@ -72,6 +74,8 @@ export default function Settings() {
       setNotifyOnMilestone(settings.notify_on_milestone ?? false);
       setMilestoneAmount((settings.milestone_amount_cents || 100000) / 100);
       setWidgetPosition(settings.widget_position || "center");
+      setAlertStartDelay(settings.alert_start_delay_seconds ?? 0);
+      setAlertBetweenDelay(settings.alert_between_delay_seconds ?? 1);
     }
   }, [settings]);
 
@@ -224,6 +228,8 @@ export default function Settings() {
           notify_on_milestone: notifyOnMilestone,
           milestone_amount_cents: Math.round(milestoneAmount * 100),
           widget_position: widgetPosition,
+          alert_start_delay_seconds: alertStartDelay,
+          alert_between_delay_seconds: alertBetweenDelay,
         });
 
       if (error) throw error;
@@ -555,6 +561,40 @@ export default function Settings() {
                 </SelectContent>
               </Select>
             </div>
+            
+            {/* Delay Settings */}
+            <div>
+              <Label htmlFor="alertStartDelay">Delay antes de aparecer (segundos)</Label>
+              <Input
+                id="alertStartDelay"
+                type="number"
+                min="0"
+                max="10"
+                value={alertStartDelay}
+                onChange={(e) => setAlertStartDelay(Math.min(10, Math.max(0, parseInt(e.target.value) || 0)))}
+                className="mt-1 max-w-[200px]"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                O alerta aguarda X segundos antes de aparecer na tela (0-10s)
+              </p>
+            </div>
+            
+            <div>
+              <Label htmlFor="alertBetweenDelay">Delay entre alertas (segundos)</Label>
+              <Input
+                id="alertBetweenDelay"
+                type="number"
+                min="0"
+                max="10"
+                value={alertBetweenDelay}
+                onChange={(e) => setAlertBetweenDelay(Math.min(10, Math.max(0, parseInt(e.target.value) || 0)))}
+                className="mt-1 max-w-[200px]"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Tempo de espera entre um alerta e o próximo (0-10s)
+              </p>
+            </div>
+            
             {/* Visual Preview */}
             <div>
               <Label className="mb-2 block">Pré-visualização</Label>

@@ -193,6 +193,8 @@ export type Database = {
       settings: {
         Row: {
           accepting_alerts: boolean | null
+          alert_between_delay_seconds: number | null
+          alert_start_delay_seconds: number | null
           email_notifications: boolean | null
           milestone_amount_cents: number | null
           notify_on_milestone: boolean | null
@@ -205,6 +207,8 @@ export type Database = {
         }
         Insert: {
           accepting_alerts?: boolean | null
+          alert_between_delay_seconds?: number | null
+          alert_start_delay_seconds?: number | null
           email_notifications?: boolean | null
           milestone_amount_cents?: number | null
           notify_on_milestone?: boolean | null
@@ -217,6 +221,8 @@ export type Database = {
         }
         Update: {
           accepting_alerts?: boolean | null
+          alert_between_delay_seconds?: number | null
+          alert_start_delay_seconds?: number | null
           email_notifications?: boolean | null
           milestone_amount_cents?: number | null
           notify_on_milestone?: boolean | null

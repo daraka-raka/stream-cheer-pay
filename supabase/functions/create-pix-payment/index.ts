@@ -15,6 +15,21 @@ interface PixPaymentRequest {
   payer_email?: string;
 }
 
+// Tiered commission rates based on transaction amount in BRL
+function getCommissionRate(amountCents: number): number {
+  const amountBRL = amountCents / 100;
+  
+  if (amountBRL <= 500) {
+    return 0.05; // 5%
+  } else if (amountBRL <= 1000) {
+    return 0.04; // 4%
+  } else if (amountBRL <= 5000) {
+    return 0.03; // 3%
+  } else {
+    return 0.025; // 2.5%
+  }
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -44,7 +59,7 @@ serve(async (req) => {
       .single();
 
     let accessToken: string;
-    let commissionRate: number;
+    let useStreamerToken = false;
 
     if (configError || !mpConfig) {
       // Fallback to platform token if streamer hasn't connected MP
@@ -54,25 +69,31 @@ serve(async (req) => {
         throw new Error("Streamer não conectou Mercado Pago e token da plataforma não configurado");
       }
       accessToken = platformToken;
-      commissionRate = 0; // No split if using platform token
     } else {
       console.log("[create-pix-payment] Using streamer's token");
       accessToken = mpConfig.mp_access_token;
-      commissionRate = mpConfig.commission_rate || 0.10;
+      useStreamerToken = true;
 
       // Check if token might be expired (optional: implement refresh logic)
       if (mpConfig.token_expires_at && new Date(mpConfig.token_expires_at) < new Date()) {
         console.warn("[create-pix-payment] Token may be expired, attempting to use anyway");
-        // TODO: Implement token refresh logic here if needed
       }
     }
 
     // Get the base URL for webhook
     const webhookUrl = `${supabaseUrl}/functions/v1/mercadopago-webhook`;
 
-    // Calculate application fee (platform commission)
+    // Calculate commission using tiered rates (only if using streamer's token)
+    const commissionRate = useStreamerToken ? getCommissionRate(amount_cents) : 0;
     const transactionAmountReais = amount_cents / 100;
-    const applicationFee = commissionRate > 0 ? Math.round(transactionAmountReais * commissionRate * 100) / 100 : 0;
+    const applicationFee = Math.round(transactionAmountReais * commissionRate * 100) / 100;
+    
+    console.log("[create-pix-payment] Tiered commission:", {
+      amount_brl: transactionAmountReais,
+      rate: `${commissionRate * 100}%`,
+      fee: applicationFee,
+      using_streamer_token: useStreamerToken
+    });
 
     // Create PIX payment payload
     const paymentPayload: Record<string, unknown> = {
@@ -87,7 +108,7 @@ serve(async (req) => {
     };
 
     // Add application_fee only if using streamer's token (marketplace split)
-    if (commissionRate > 0 && applicationFee > 0) {
+    if (useStreamerToken && applicationFee > 0) {
       paymentPayload.application_fee = applicationFee;
       console.log("[create-pix-payment] Application fee (commission):", applicationFee);
     }

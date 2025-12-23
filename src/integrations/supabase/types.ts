@@ -250,6 +250,60 @@ export type Database = {
           },
         ]
       }
+      streamer_mp_config: {
+        Row: {
+          commission_rate: number | null
+          created_at: string | null
+          id: string
+          mp_access_token: string
+          mp_public_key: string | null
+          mp_refresh_token: string | null
+          mp_user_id: string
+          streamer_id: string
+          token_expires_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          commission_rate?: number | null
+          created_at?: string | null
+          id?: string
+          mp_access_token: string
+          mp_public_key?: string | null
+          mp_refresh_token?: string | null
+          mp_user_id: string
+          streamer_id: string
+          token_expires_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          commission_rate?: number | null
+          created_at?: string | null
+          id?: string
+          mp_access_token?: string
+          mp_public_key?: string | null
+          mp_refresh_token?: string | null
+          mp_user_id?: string
+          streamer_id?: string
+          token_expires_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "streamer_mp_config_streamer_id_fkey"
+            columns: ["streamer_id"]
+            isOneToOne: true
+            referencedRelation: "public_streamer_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "streamer_mp_config_streamer_id_fkey"
+            columns: ["streamer_id"]
+            isOneToOne: true
+            referencedRelation: "streamers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       streamers: {
         Row: {
           auth_user_id: string

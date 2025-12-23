@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { useSearchParams } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -8,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Copy, CheckCircle, AlertCircle, Upload, Mail, Pause, Play } from "lucide-react";
+import { Copy, CheckCircle, AlertCircle, Upload, Mail, Pause, Play, CreditCard, Loader2, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { useTheme } from "next-themes";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,9 +29,13 @@ const generateHandle = (displayName: string): string => {
     .replace(/^_|_$/g, ""); // Remove leading/trailing underscores
 };
 
+// MP Client ID will be loaded from edge function or environment
+const MP_CLIENT_ID = import.meta.env.VITE_MP_CLIENT_ID || "";
+
 export default function Settings() {
   const { user } = useAuth();
   const { theme, setTheme } = useTheme();
+  const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [streamer, setStreamer] = useState<any>(null);
@@ -40,6 +45,10 @@ export default function Settings() {
   const [imageDuration, setImageDuration] = useState(5);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
+  
+  // Mercado Pago config
+  const [mpConfig, setMpConfig] = useState<any>(null);
+  const [mpLoading, setMpLoading] = useState(false);
   
   // Advanced preferences
   const [acceptingAlerts, setAcceptingAlerts] = useState(true);
@@ -57,11 +66,23 @@ export default function Settings() {
     }
   }, [user]);
 
+  // Check for MP connection success
+  useEffect(() => {
+    if (searchParams.get("mp") === "connected") {
+      toast.success("Mercado Pago conectado com sucesso!");
+      // Reload MP config
+      if (streamer) {
+        loadMpConfig(streamer.id);
+      }
+    }
+  }, [searchParams, streamer]);
+
   useEffect(() => {
     if (streamer) {
       setDisplayName(streamer.display_name || "");
       setBio(streamer.bio || "");
       setPreviewPhoto(streamer.photo_url || null);
+      loadMpConfig(streamer.id);
     }
   }, [streamer]);
 
@@ -78,6 +99,22 @@ export default function Settings() {
       setAlertBetweenDelay(settings.alert_between_delay_seconds ?? 1);
     }
   }, [settings]);
+
+  const loadMpConfig = async (streamerId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("streamer_mp_config")
+        .select("mp_user_id, commission_rate, created_at")
+        .eq("streamer_id", streamerId)
+        .maybeSingle();
+
+      if (!error && data) {
+        setMpConfig(data);
+      }
+    } catch (error) {
+      console.error("Error loading MP config:", error);
+    }
+  };
 
   const loadStreamerData = async () => {
     try {
@@ -258,6 +295,102 @@ export default function Settings() {
             Gerencie seu perfil e preferências
           </p>
         </div>
+
+        {/* Configurações de Recebimento - Mercado Pago */}
+        <Card className="p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <CreditCard className="h-5 w-5 text-primary" />
+            <h2 className="text-xl font-semibold">Configurações de Recebimento</h2>
+          </div>
+          
+          {mpConfig ? (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <CheckCircle className="h-6 w-6 text-green-500" />
+                  <div>
+                    <p className="font-medium text-green-600 dark:text-green-400">
+                      Mercado Pago conectado
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      ID da conta: {mpConfig.mp_user_id}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Comissão da plataforma: {((mpConfig.commission_rate || 0.10) * 100).toFixed(0)}%
+                    </p>
+                  </div>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    // For now, just show a message. Full disconnect would require edge function
+                    toast.info("Para desconectar, entre em contato com o suporte.");
+                  }}
+                >
+                  Desconectar
+                </Button>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Você receberá os pagamentos diretamente na sua conta do Mercado Pago, 
+                já com a comissão da plataforma descontada automaticamente.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="p-4 bg-muted/50 rounded-lg">
+                <p className="text-muted-foreground">
+                  Conecte sua conta do Mercado Pago para receber pagamentos diretamente. 
+                  A comissão da plataforma será descontada automaticamente de cada venda.
+                </p>
+              </div>
+              <Button 
+                onClick={() => {
+                  if (!MP_CLIENT_ID) {
+                    toast.error("Configuração do Mercado Pago não encontrada");
+                    return;
+                  }
+                  if (!streamer?.id) {
+                    toast.error("Erro ao identificar streamer");
+                    return;
+                  }
+                  
+                  setMpLoading(true);
+                  const redirectUri = `${window.location.origin}/auth/callback/mercadopago`;
+                  const state = btoa(JSON.stringify({ streamer_id: streamer.id }));
+                  
+                  const authUrl = `https://auth.mercadopago.com.br/authorization?` +
+                    `client_id=${MP_CLIENT_ID}&` +
+                    `response_type=code&` +
+                    `platform_id=mp&` +
+                    `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+                    `state=${state}`;
+                  
+                  window.location.href = authUrl;
+                }}
+                disabled={mpLoading || !MP_CLIENT_ID}
+                className="w-full sm:w-auto"
+              >
+                {mpLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Redirecionando...
+                  </>
+                ) : (
+                  <>
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Conectar Mercado Pago
+                  </>
+                )}
+              </Button>
+              {!MP_CLIENT_ID && (
+                <p className="text-sm text-destructive">
+                  ⚠️ VITE_MP_CLIENT_ID não configurado no ambiente
+                </p>
+              )}
+            </div>
+          )}
+        </Card>
 
         {/* Aceitar Alertas */}
         <Card className={`p-6 ${!acceptingAlerts ? 'border-yellow-500/50 bg-yellow-500/5' : ''}`}>

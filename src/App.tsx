@@ -15,6 +15,7 @@ import Transactions from "./pages/Transactions";
 import Settings from "./pages/Settings";
 import PublicStreamerPage from "./pages/PublicStreamerPage";
 import WidgetOverlay from "./pages/WidgetOverlay";
+import MercadoPagoCallback from "./pages/MercadoPagoCallback";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Landing />} />
               <Route path="/auth/*" element={<Auth />} />
+              <Route path="/auth/callback/mercadopago" element={<MercadoPagoCallback />} />
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/alerts" element={<ProtectedRoute><Alerts /></ProtectedRoute>} />
               <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />

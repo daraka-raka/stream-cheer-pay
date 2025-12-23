@@ -80,11 +80,12 @@ const Dashboard = () => {
 
       if (!streamerData) return;
 
-      // Total revenue
+      // Total revenue (excluding test mode alerts)
       const { data: allTransactions } = await supabase
         .from("transactions")
-        .select("amount_streamer_cents, status")
-        .eq("streamer_id", streamerData.id);
+        .select("amount_streamer_cents, status, alerts!inner(test_mode)")
+        .eq("streamer_id", streamerData.id)
+        .eq("alerts.test_mode", false);
 
       const totalRevenue = allTransactions?.filter(t => t.status === "paid").reduce((sum, t) => sum + t.amount_streamer_cents, 0) || 0;
 
@@ -97,9 +98,10 @@ const Dashboard = () => {
 
       const { data: recentTransactions } = await supabase
         .from("transactions")
-        .select("amount_streamer_cents, created_at")
+        .select("amount_streamer_cents, created_at, alerts!inner(test_mode)")
         .eq("streamer_id", streamerData.id)
         .eq("status", "paid")
+        .eq("alerts.test_mode", false)
         .gte("created_at", fourteenDaysAgo.toISOString());
 
       const thisWeekRevenue = recentTransactions
@@ -176,12 +178,14 @@ const Dashboard = () => {
           title,
           thumb_path,
           price_cents,
+          test_mode,
           transactions!inner (
             amount_streamer_cents,
             status
           )
         `)
         .eq("streamer_id", streamerData.id)
+        .eq("test_mode", false)
         .eq("transactions.status", "paid");
 
       // Group by alert and calculate totals
@@ -263,9 +267,10 @@ const Dashboard = () => {
 
       const { data: transactions } = await supabase
         .from("transactions")
-        .select("amount_streamer_cents, created_at")
+        .select("amount_streamer_cents, created_at, alerts!inner(test_mode)")
         .eq("streamer_id", streamerData.id)
         .eq("status", "paid")
+        .eq("alerts.test_mode", false)
         .gte("created_at", startDate.toISOString())
         .order("created_at", { ascending: true });
 
@@ -488,75 +493,6 @@ const Dashboard = () => {
           <div className="grid lg:grid-cols-2 gap-6">
             <TopAlerts alerts={topAlerts} loading={loading} />
             <QueuePreview queue={queueItems} loading={loading} />
-          </div>
-
-          {/* Quick Links */}
-          <div className="grid md:grid-cols-2 gap-6">
-            <Card className="border-border shadow-card">
-              <CardHeader>
-                <CardTitle>Widget URL (OBS)</CardTitle>
-                <CardDescription>
-                  Use esta URL como Browser Source no OBS ou software de streaming
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={widgetUrl}
-                    readOnly
-                    className="flex-1 px-3 py-2 bg-muted border border-border rounded-md text-sm"
-                  />
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    onClick={() => copyToClipboard(widgetUrl, "Widget URL")}
-                  >
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    onClick={() => window.open(widgetUrl, "_blank")}
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-border shadow-card">
-              <CardHeader>
-                <CardTitle>Página Pública</CardTitle>
-                <CardDescription>
-                  Compartilhe esta URL com seu público para que possam comprar alertas
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={publicUrl}
-                    readOnly
-                    className="flex-1 px-3 py-2 bg-muted border border-border rounded-md text-sm"
-                  />
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    onClick={() => copyToClipboard(publicUrl, "Página pública")}
-                  >
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    onClick={() => window.open(publicUrl, "_blank")}
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
           </div>
 
           {/* Quick Actions */}

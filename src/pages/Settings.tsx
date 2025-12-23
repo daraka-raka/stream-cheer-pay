@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Copy, CheckCircle, AlertCircle, Upload, Webhook, Mail, Layout, Pause, Play } from "lucide-react";
+import { Copy, CheckCircle, AlertCircle, Upload, Mail, Pause, Play } from "lucide-react";
 import { toast } from "sonner";
 import { useTheme } from "next-themes";
 import { supabase } from "@/integrations/supabase/client";
@@ -499,125 +499,6 @@ export default function Settings() {
           </div>
         </Card>
 
-        {/* Integrações */}
-        <Card className="p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Webhook className="h-5 w-5 text-primary" />
-            <h2 className="text-xl font-semibold">Integrações</h2>
-          </div>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="webhookUrl">URL do Webhook</Label>
-              <Input
-                id="webhookUrl"
-                type="url"
-                placeholder="https://seu-servidor.com/webhook"
-                value={webhookUrl}
-                onChange={(e) => setWebhookUrl(e.target.value)}
-                className="mt-1 font-mono text-sm"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Receba notificações de vendas em tempo real via POST request
-              </p>
-            </div>
-            <div className="p-3 bg-muted/50 rounded-lg text-sm space-y-2">
-              <p className="font-medium">📡 Payload do Webhook:</p>
-              <pre className="text-xs bg-background p-2 rounded overflow-x-auto">
-{`{
-  "event": "sale",
-  "alert_title": "Nome do Alerta",
-  "amount_cents": 1000,
-  "buyer_note": "Mensagem do comprador",
-  "timestamp": "2024-01-01T12:00:00Z"
-}`}
-              </pre>
-            </div>
-          </div>
-        </Card>
-
-        {/* Aparência do Widget */}
-        <Card className="p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Layout className="h-5 w-5 text-primary" />
-            <h2 className="text-xl font-semibold">Aparência do Widget</h2>
-          </div>
-          <div className="space-y-4">
-            <div>
-              <Label>Posição do Alerta no Overlay</Label>
-              <Select value={widgetPosition} onValueChange={setWidgetPosition}>
-                <SelectTrigger className="mt-1 max-w-[250px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="top-left">Superior Esquerdo</SelectItem>
-                  <SelectItem value="top-center">Superior Centro</SelectItem>
-                  <SelectItem value="top-right">Superior Direito</SelectItem>
-                  <SelectItem value="center-left">Centro Esquerdo</SelectItem>
-                  <SelectItem value="center">Centro</SelectItem>
-                  <SelectItem value="center-right">Centro Direito</SelectItem>
-                  <SelectItem value="bottom-left">Inferior Esquerdo</SelectItem>
-                  <SelectItem value="bottom-center">Inferior Centro</SelectItem>
-                  <SelectItem value="bottom-right">Inferior Direito</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            {/* Delay Settings */}
-            <div>
-              <Label htmlFor="alertStartDelay">Delay antes de aparecer (segundos)</Label>
-              <Input
-                id="alertStartDelay"
-                type="number"
-                min="0"
-                max="10"
-                value={alertStartDelay}
-                onChange={(e) => setAlertStartDelay(Math.min(10, Math.max(0, parseInt(e.target.value) || 0)))}
-                className="mt-1 max-w-[200px]"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                O alerta aguarda X segundos antes de aparecer na tela (0-10s)
-              </p>
-            </div>
-            
-            <div>
-              <Label htmlFor="alertBetweenDelay">Delay entre alertas (segundos)</Label>
-              <Input
-                id="alertBetweenDelay"
-                type="number"
-                min="0"
-                max="10"
-                value={alertBetweenDelay}
-                onChange={(e) => setAlertBetweenDelay(Math.min(10, Math.max(0, parseInt(e.target.value) || 0)))}
-                className="mt-1 max-w-[200px]"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Tempo de espera entre um alerta e o próximo (0-10s)
-              </p>
-            </div>
-            
-            {/* Visual Preview */}
-            <div>
-              <Label className="mb-2 block">Pré-visualização</Label>
-              <div className="relative w-full max-w-[300px] aspect-video bg-muted/30 border border-border rounded-lg overflow-hidden">
-                <div
-                  className={`absolute w-12 h-8 bg-primary/80 rounded flex items-center justify-center text-[10px] text-primary-foreground font-medium transition-all ${
-                    widgetPosition === "top-left" ? "top-2 left-2" :
-                    widgetPosition === "top-center" ? "top-2 left-1/2 -translate-x-1/2" :
-                    widgetPosition === "top-right" ? "top-2 right-2" :
-                    widgetPosition === "center-left" ? "top-1/2 left-2 -translate-y-1/2" :
-                    widgetPosition === "center" ? "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" :
-                    widgetPosition === "center-right" ? "top-1/2 right-2 -translate-y-1/2" :
-                    widgetPosition === "bottom-left" ? "bottom-2 left-2" :
-                    widgetPosition === "bottom-center" ? "bottom-2 left-1/2 -translate-x-1/2" :
-                    "bottom-2 right-2"
-                  }`}
-                >
-                  Alerta
-                </div>
-              </div>
-            </div>
-          </div>
-        </Card>
 
         {/* Preferências Gerais */}
         <Card className="p-6">
@@ -662,6 +543,36 @@ export default function Settings() {
                 onChange={(e) => setImageDuration(parseInt(e.target.value) || 5)}
                 className="mt-1 max-w-[200px]"
               />
+            </div>
+            <div>
+              <Label htmlFor="alertStartDelay">Delay antes do alerta aparecer (segundos)</Label>
+              <Input
+                id="alertStartDelay"
+                type="number"
+                min="0"
+                max="10"
+                value={alertStartDelay}
+                onChange={(e) => setAlertStartDelay(Math.min(10, Math.max(0, parseInt(e.target.value) || 0)))}
+                className="mt-1 max-w-[200px]"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                O alerta aguarda X segundos antes de aparecer na tela (0-10s)
+              </p>
+            </div>
+            <div>
+              <Label htmlFor="alertBetweenDelay">Delay entre alertas (segundos)</Label>
+              <Input
+                id="alertBetweenDelay"
+                type="number"
+                min="0"
+                max="10"
+                value={alertBetweenDelay}
+                onChange={(e) => setAlertBetweenDelay(Math.min(10, Math.max(0, parseInt(e.target.value) || 0)))}
+                className="mt-1 max-w-[200px]"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Tempo de espera entre um alerta e o próximo (0-10s)
+              </p>
             </div>
             <Button onClick={handleSavePreferences} disabled={saving || loading}>
               {saving ? "Salvando..." : "Salvar Todas as Preferências"}

@@ -138,6 +138,8 @@
     let isPlaying = false;
     let supabaseClient = null;
     let defaultDuration = 5000; // 5 seconds default
+    let alertStartDelay = 0; // delay before showing alert (ms)
+    let alertBetweenDelay = 1000; // delay between alerts (ms)
     
     function log(msg) {
       console.log('[Overlay]', msg);
@@ -171,15 +173,21 @@
       streamerId = streamer.id;
       log('Streamer encontrado! Conectando realtime...');
       
-      // Load settings for duration
+      // Load settings for duration and delays
       const { data: settings } = await supabaseClient
         .from('settings')
-        .select('overlay_image_duration_seconds')
+        .select('overlay_image_duration_seconds, alert_start_delay_seconds, alert_between_delay_seconds')
         .eq('streamer_id', streamerId)
         .single();
       
       if (settings?.overlay_image_duration_seconds) {
         defaultDuration = settings.overlay_image_duration_seconds * 1000;
+      }
+      if (settings?.alert_start_delay_seconds !== undefined) {
+        alertStartDelay = settings.alert_start_delay_seconds * 1000;
+      }
+      if (settings?.alert_between_delay_seconds !== undefined) {
+        alertBetweenDelay = settings.alert_between_delay_seconds * 1000;
       }
       
       // Load existing queued items
@@ -276,6 +284,12 @@
       isPlaying = true;
       const item = alertQueue.shift();
       
+      // Delay before showing alert
+      if (alertStartDelay > 0) {
+        log('Aguardando ' + (alertStartDelay / 1000) + 's antes de exibir...');
+        await new Promise(resolve => setTimeout(resolve, alertStartDelay));
+      }
+      
       log('Tocando: ' + item.alerts.title);
       
       // Update status to playing
@@ -296,9 +310,11 @@
       isPlaying = false;
       log('Aguardando alertas...');
       
-      // Process next item
+      // Process next item with delay between alerts
       if (alertQueue.length > 0) {
-        setTimeout(() => processQueue(), 500);
+        const delay = alertBetweenDelay > 0 ? alertBetweenDelay : 500;
+        log('Próximo alerta em ' + (delay / 1000) + 's...');
+        setTimeout(() => processQueue(), delay);
       }
     }
     

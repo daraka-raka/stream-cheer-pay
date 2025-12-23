@@ -16,6 +16,8 @@ const WidgetOverlay = () => {
   const [currentAlert, setCurrentAlert] = useState<any>(null);
   const [duration, setDuration] = useState(5);
   const [widgetPosition, setWidgetPosition] = useState("center");
+  const [alertStartDelay, setAlertStartDelay] = useState(0);
+  const [alertBetweenDelay, setAlertBetweenDelay] = useState(1);
 
   // Set transparent background for widget
   useEffect(() => {
@@ -47,7 +49,7 @@ const WidgetOverlay = () => {
         // Load settings
         const { data: settings } = await supabase
           .from("settings")
-          .select("overlay_image_duration_seconds, widget_position")
+          .select("overlay_image_duration_seconds, widget_position, alert_start_delay_seconds, alert_between_delay_seconds")
           .eq("streamer_id", streamer.id)
           .single();
         
@@ -56,6 +58,12 @@ const WidgetOverlay = () => {
         }
         if (settings?.widget_position) {
           setWidgetPosition(settings.widget_position);
+        }
+        if (settings?.alert_start_delay_seconds !== undefined) {
+          setAlertStartDelay(settings.alert_start_delay_seconds);
+        }
+        if (settings?.alert_between_delay_seconds !== undefined) {
+          setAlertBetweenDelay(settings.alert_between_delay_seconds);
         }
       }
     };
@@ -119,6 +127,12 @@ const WidgetOverlay = () => {
       const nextItem = queue[0];
       console.log("[Widget] Processing alert:", nextItem.id);
 
+      // Delay before showing alert
+      if (alertStartDelay > 0) {
+        console.log(`[Widget] Waiting ${alertStartDelay}s before showing...`);
+        await new Promise(resolve => setTimeout(resolve, alertStartDelay * 1000));
+      }
+
       // Update status to playing
       await supabase
         .from("alert_queue")
@@ -145,7 +159,7 @@ const WidgetOverlay = () => {
     };
 
     processNext();
-  }, [queue, currentAlert]);
+  }, [queue, currentAlert, alertStartDelay]);
 
   const handleAlertComplete = async () => {
     if (!currentAlert) return;
@@ -158,7 +172,13 @@ const WidgetOverlay = () => {
       .update({ status: "finished", finished_at: new Date().toISOString() })
       .eq("id", currentAlert.queueId);
 
-    setCurrentAlert(null);
+    // Delay between alerts before clearing current
+    if (alertBetweenDelay > 0) {
+      console.log(`[Widget] Waiting ${alertBetweenDelay}s before next alert...`);
+      setTimeout(() => setCurrentAlert(null), alertBetweenDelay * 1000);
+    } else {
+      setCurrentAlert(null);
+    }
   };
 
   const getPositionClasses = () => {

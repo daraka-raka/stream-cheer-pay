@@ -32,43 +32,42 @@ const WidgetOverlay = () => {
     };
   }, []);
 
-  // Load streamer by public key
+  // Load streamer and settings via public view (no RLS required)
   useEffect(() => {
-    const loadStreamer = async () => {
+    const loadStreamerAndSettings = async () => {
       if (!publicKey) return;
 
-      const { data: streamer } = await supabase
-        .from("public_streamer_profiles")
-        .select("id")
+      // Use the public_widget_settings view that exposes only necessary data
+      const { data: widgetSettings, error } = await supabase
+        .from("public_widget_settings")
+        .select("*")
         .eq("public_key", publicKey)
         .single();
 
-      if (streamer) {
-        setStreamerId(streamer.id);
+      if (error) {
+        console.error("[Widget] Error loading settings:", error);
+        return;
+      }
+
+      if (widgetSettings) {
+        setStreamerId(widgetSettings.streamer_id);
         
-        // Load settings
-        const { data: settings } = await supabase
-          .from("settings")
-          .select("overlay_image_duration_seconds, widget_position, alert_start_delay_seconds, alert_between_delay_seconds")
-          .eq("streamer_id", streamer.id)
-          .single();
-        
-        if (settings?.overlay_image_duration_seconds) {
-          setDuration(settings.overlay_image_duration_seconds);
+        if (widgetSettings.overlay_image_duration_seconds) {
+          setDuration(widgetSettings.overlay_image_duration_seconds);
         }
-        if (settings?.widget_position) {
-          setWidgetPosition(settings.widget_position);
+        if (widgetSettings.widget_position) {
+          setWidgetPosition(widgetSettings.widget_position);
         }
-        if (settings?.alert_start_delay_seconds !== undefined) {
-          setAlertStartDelay(settings.alert_start_delay_seconds);
+        if (widgetSettings.alert_start_delay_seconds !== undefined) {
+          setAlertStartDelay(widgetSettings.alert_start_delay_seconds);
         }
-        if (settings?.alert_between_delay_seconds !== undefined) {
-          setAlertBetweenDelay(settings.alert_between_delay_seconds);
+        if (widgetSettings.alert_between_delay_seconds !== undefined) {
+          setAlertBetweenDelay(widgetSettings.alert_between_delay_seconds);
         }
       }
     };
 
-    loadStreamer();
+    loadStreamerAndSettings();
   }, [publicKey]);
 
   // Load pending alerts on mount

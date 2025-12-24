@@ -3,8 +3,99 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-signature, x-request-id",
 };
+
+// HMAC signature validation for Mercado Pago webhooks
+async function validateSignature(req: Request, body: string): Promise<boolean> {
+  const webhookSecret = Deno.env.get("MP_WEBHOOK_SECRET");
+  
+  // If no secret configured, log warning but allow (for backwards compatibility during transition)
+  if (!webhookSecret) {
+    console.warn("[mercadopago-webhook] MP_WEBHOOK_SECRET not configured - signature validation skipped");
+    return true;
+  }
+
+  const xSignature = req.headers.get("x-signature");
+  const xRequestId = req.headers.get("x-request-id");
+
+  if (!xSignature || !xRequestId) {
+    console.error("[mercadopago-webhook] Missing x-signature or x-request-id headers");
+    return false;
+  }
+
+  // Parse x-signature header (format: "ts=timestamp,v1=hash")
+  const signatureParts: Record<string, string> = {};
+  xSignature.split(",").forEach(part => {
+    const [key, value] = part.split("=");
+    if (key && value) {
+      signatureParts[key] = value;
+    }
+  });
+
+  const ts = signatureParts["ts"];
+  const v1 = signatureParts["v1"];
+
+  if (!ts || !v1) {
+    console.error("[mercadopago-webhook] Invalid x-signature format");
+    return false;
+  }
+
+  // Check timestamp is not too old (5 minutes tolerance)
+  const timestamp = parseInt(ts, 10);
+  const now = Math.floor(Date.now() / 1000);
+  if (Math.abs(now - timestamp) > 300) {
+    console.error("[mercadopago-webhook] Timestamp too old:", { timestamp, now, diff: now - timestamp });
+    return false;
+  }
+
+  // Parse body to get data.id for signature validation
+  let dataId = "";
+  try {
+    const bodyJson = JSON.parse(body);
+    dataId = bodyJson.data?.id ? String(bodyJson.data.id) : "";
+  } catch {
+    console.error("[mercadopago-webhook] Failed to parse body for signature validation");
+    return false;
+  }
+
+  // Build the manifest string as per MP documentation
+  // Format: id:[data.id];request-id:[x-request-id];ts:[timestamp];
+  const manifest = `id:${dataId};request-id:${xRequestId};ts:${ts};`;
+
+  // Calculate HMAC-SHA256
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(webhookSecret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+
+  const signature = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    encoder.encode(manifest)
+  );
+
+  // Convert to hex
+  const calculatedHash = Array.from(new Uint8Array(signature))
+    .map(b => b.toString(16).padStart(2, "0"))
+    .join("");
+
+  const isValid = calculatedHash === v1;
+  
+  if (!isValid) {
+    console.error("[mercadopago-webhook] Signature mismatch:", { 
+      expected: v1.substring(0, 16) + "...", 
+      calculated: calculatedHash.substring(0, 16) + "...",
+      manifest 
+    });
+  }
+
+  return isValid;
+}
 
 // Tiered commission rates based on transaction amount in BRL
 function getCommissionRate(amountCents: number): number {
@@ -29,20 +120,38 @@ serve(async (req) => {
 
   try {
     const url = new URL(req.url);
-    const body = await req.json();
+    const body = await req.text();
     
-    console.log("[mercadopago-webhook] Received webhook:", JSON.stringify(body));
+    console.log("[mercadopago-webhook] Received webhook, validating signature...");
+
+    // Validate webhook signature
+    const isValidSignature = await validateSignature(req, body);
+    if (!isValidSignature) {
+      console.error("[mercadopago-webhook] Invalid signature - rejecting request");
+      return new Response(
+        JSON.stringify({ error: "Invalid signature" }),
+        { 
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        }
+      );
+    }
+
+    console.log("[mercadopago-webhook] Signature validated successfully");
+
+    const bodyJson = JSON.parse(body);
+    console.log("[mercadopago-webhook] Received webhook:", JSON.stringify(bodyJson));
     console.log("[mercadopago-webhook] Query params:", Object.fromEntries(url.searchParams));
 
     // Mercado Pago sends different types of notifications
-    if (body.type !== "payment" && body.action !== "payment.created" && body.action !== "payment.updated") {
-      console.log("[mercadopago-webhook] Ignoring non-payment notification:", body.type, body.action);
+    if (bodyJson.type !== "payment" && bodyJson.action !== "payment.created" && bodyJson.action !== "payment.updated") {
+      console.log("[mercadopago-webhook] Ignoring non-payment notification:", bodyJson.type, bodyJson.action);
       return new Response(JSON.stringify({ received: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const paymentId = body.data?.id;
+    const paymentId = bodyJson.data?.id;
     if (!paymentId) {
       console.log("[mercadopago-webhook] No payment ID in webhook body");
       return new Response(JSON.stringify({ received: true }), {

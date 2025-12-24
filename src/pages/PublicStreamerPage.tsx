@@ -1,4 +1,4 @@
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Music, Image as ImageIcon, Video, AlertCircle, Loader2, Copy, CheckCircle2, Clock, PauseCircle, MessageSquare } from "lucide-react";
+import { Music, Image as ImageIcon, Video, AlertCircle, Loader2, Copy, CheckCircle2, Clock, PauseCircle, MessageSquare, Sparkles, Zap } from "lucide-react";
 import { useState, useEffect } from "react";
 
 interface PixData {
@@ -394,10 +394,13 @@ const PublicStreamerPage = () => {
 
   if (streamerLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Carregando...</p>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center animate-fade-in">
+          <div className="relative">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary/20 border-t-primary mx-auto"></div>
+            <Sparkles className="h-6 w-6 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+          </div>
+          <p className="text-muted-foreground mt-4 text-lg">Carregando...</p>
         </div>
       </div>
     );
@@ -405,13 +408,17 @@ const PublicStreamerPage = () => {
 
   if (!streamer) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <AlertCircle className="h-16 w-16 text-muted-foreground mx-auto" />
-          <h1 className="text-2xl font-bold">Streamer não encontrado</h1>
-          <Button onClick={() => navigate("/")}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Voltar
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-6 animate-fade-in p-8">
+          <div className="h-24 w-24 rounded-full bg-muted flex items-center justify-center mx-auto">
+            <AlertCircle className="h-12 w-12 text-muted-foreground" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Streamer não encontrado</h1>
+            <p className="text-muted-foreground">O perfil que você procura não existe ou foi removido.</p>
+          </div>
+          <Button onClick={() => navigate("/")} size="lg">
+            Voltar ao início
           </Button>
         </div>
       </div>
@@ -426,122 +433,159 @@ const PublicStreamerPage = () => {
     .slice(0, 2);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
-      {/* Header */}
-      <header className="border-b bg-background/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate("/")}
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Premium Header */}
+      <header className="border-b bg-gradient-to-r from-primary/5 via-background to-secondary/5 backdrop-blur-sm sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-center">
+          <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+            <Zap className="h-6 w-6 text-primary" />
+            <span className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
               Streala
-            </h1>
-          </div>
+            </span>
+          </Link>
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-8 space-y-8">
-        {/* Streamer Profile */}
-        <div className="flex flex-col md:flex-row items-start md:items-center gap-6 p-6 rounded-lg border bg-card">
-          <Avatar className="h-24 w-24">
-            <AvatarImage src={streamer.photo_url || undefined} />
-            <AvatarFallback className="text-2xl">{initials}</AvatarFallback>
-          </Avatar>
-          <div className="space-y-2">
-            <div>
-              <h2 className="text-3xl font-bold">{streamer.display_name}</h2>
-              <p className="text-muted-foreground">@{streamer.handle}</p>
+      {/* Hero Section */}
+      <section className="relative overflow-hidden">
+        {/* Gradient Background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-secondary/5 to-accent/10" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/20 via-transparent to-transparent opacity-50" />
+        
+        <div className="relative container mx-auto px-4 py-12 md:py-16">
+          <div className="flex flex-col items-center text-center animate-fade-in">
+            {/* Avatar with Glow */}
+            <div className="relative mb-6">
+              <div className="absolute inset-0 bg-primary/30 rounded-full blur-xl scale-110" />
+              <Avatar className="h-28 w-28 md:h-36 md:w-36 relative ring-4 ring-primary/30 shadow-2xl">
+                <AvatarImage src={streamer.photo_url || undefined} className="object-cover" />
+                <AvatarFallback className="text-3xl md:text-4xl bg-gradient-to-br from-primary to-secondary text-primary-foreground">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
             </div>
+
+            {/* Name & Handle */}
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-2">
+              {streamer.display_name}
+            </h1>
+            <p className="text-lg md:text-xl text-primary font-medium mb-4">
+              @{streamer.handle}
+            </p>
+
+            {/* Bio */}
             {streamer.bio && (
-              <p className="text-sm text-muted-foreground max-w-2xl">{streamer.bio}</p>
+              <p className="text-muted-foreground max-w-xl mx-auto text-base md:text-lg mb-6 leading-relaxed">
+                {streamer.bio}
+              </p>
             )}
-            <div className="flex items-center gap-2 text-sm">
-              <Badge variant="secondary">
-                {alerts?.length || 0} Alertas Disponíveis
-              </Badge>
-            </div>
+
+            {/* Alerts Badge */}
+            <Badge variant="secondary" className="text-sm px-4 py-2 gap-2">
+              <Sparkles className="h-4 w-4" />
+              {alerts?.length || 0} Alertas Disponíveis
+            </Badge>
           </div>
         </div>
+      </section>
 
-        {/* Not Accepting Alerts Banner */}
-        {streamer.accepting_alerts === false && (
-          <div className="flex items-center gap-3 p-4 rounded-lg border border-yellow-500/50 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400">
+      {/* Not Accepting Alerts Banner */}
+      {streamer.accepting_alerts === false && (
+        <div className="container mx-auto px-4 -mt-4 mb-4">
+          <div className="flex items-center gap-3 p-4 rounded-xl border border-yellow-500/50 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400">
             <PauseCircle className="h-6 w-6 flex-shrink-0" />
             <div>
-              <p className="font-medium">Este streamer não está aceitando alertas no momento</p>
+              <p className="font-semibold">Este streamer não está aceitando alertas no momento</p>
               <p className="text-sm opacity-80">Volte mais tarde para ver os alertas disponíveis.</p>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Alerts Gallery */}
+      {/* Alerts Section */}
+      <section className="flex-1 container mx-auto px-4 py-8 md:py-12">
+        {/* Section Title */}
+        <div className="text-center mb-8 md:mb-10">
+          <h2 className="text-2xl md:text-3xl font-bold mb-2">
+            Escolha seu Alerta <span className="inline-block animate-pulse">🎉</span>
+          </h2>
+          <p className="text-muted-foreground">
+            Clique em um alerta para enviar para a live
+          </p>
+        </div>
+
         {alertsLoading ? (
           <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Carregando alertas...</p>
+            <div className="relative inline-block">
+              <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary/20 border-t-primary mx-auto"></div>
+            </div>
+            <p className="text-muted-foreground mt-4">Carregando alertas...</p>
           </div>
         ) : alerts && alerts.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {alerts.map((alert) => {
-                  const thumbUrl = alert.thumb_path || alert.media_path;
-
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {alerts.map((alert, index) => {
+              const thumbUrl = alert.thumb_path || alert.media_path;
               const isDisabled = streamer.accepting_alerts === false;
 
               return (
                 <Card
                   key={alert.id}
-                  className={`transition-all duration-300 relative ${
+                  className={`group transition-all duration-300 relative overflow-hidden border-2 ${
                     isDisabled 
-                      ? 'opacity-60 cursor-not-allowed' 
-                      : 'cursor-pointer hover:shadow-glow hover:scale-105'
+                      ? 'opacity-60 cursor-not-allowed border-border' 
+                      : 'cursor-pointer border-border hover:border-primary/50 hover:shadow-[0_0_30px_-5px_hsl(var(--primary)/0.3)] hover:-translate-y-1'
                   }`}
+                  style={{ animationDelay: `${index * 50}ms` }}
                   onClick={() => !isDisabled && handleAlertClick(alert)}
                 >
                   <CardHeader className="p-0">
-                    <div className="aspect-video relative overflow-hidden rounded-t-lg">
+                    <div className="aspect-video relative overflow-hidden">
                       <img
                         src={thumbUrl}
                         alt={alert.title}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                       />
-                      <Badge className="absolute top-2 right-2">
+                      <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      <Badge className="absolute top-3 right-3 shadow-lg">
                         {getMediaIcon(alert.media_type)}
                         <span className="ml-1 capitalize">{alert.media_type}</span>
                       </Badge>
                       {alert.test_mode && (
-                        <Badge variant="outline" className="absolute top-2 left-2 bg-yellow-500/90 text-yellow-950 border-yellow-600">
+                        <Badge variant="outline" className="absolute top-3 left-3 bg-yellow-500/90 text-yellow-950 border-yellow-600 shadow-lg">
                           🧪 Teste
                         </Badge>
                       )}
                     </div>
                   </CardHeader>
-                  <CardContent className="p-4">
-                    <CardTitle className="text-lg mb-2">{alert.title}</CardTitle>
+                  <CardContent className="p-4 pb-2">
+                    <CardTitle className="text-lg mb-1 group-hover:text-primary transition-colors">
+                      {alert.title}
+                    </CardTitle>
                     {alert.description && (
                       <p className="text-sm text-muted-foreground line-clamp-2">
                         {alert.description}
                       </p>
                     )}
                   </CardContent>
-                  <CardFooter className="p-4 pt-0">
-                    <div className="w-full flex items-center justify-between">
-                      <span className="text-2xl font-bold text-primary">
-                        R$ {(alert.price_cents / 100).toFixed(2)}
-                      </span>
-                    </div>
+                  <CardFooter className="p-4 pt-2 flex items-center justify-between">
+                    <span className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                      R$ {(alert.price_cents / 100).toFixed(2)}
+                    </span>
+                    {!isDisabled && (
+                      <Button size="sm" variant="secondary" className="opacity-0 group-hover:opacity-100 transition-opacity">
+                        Comprar
+                      </Button>
+                    )}
                   </CardFooter>
                 </Card>
               );
             })}
           </div>
         ) : (
-          <div className="text-center py-12 space-y-4">
-            <AlertCircle className="h-16 w-16 text-muted-foreground mx-auto" />
+          <div className="text-center py-16 space-y-4">
+            <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center mx-auto">
+              <AlertCircle className="h-10 w-10 text-muted-foreground" />
+            </div>
             <div>
               <h3 className="text-xl font-semibold mb-2">Nenhum alerta disponível</h3>
               <p className="text-muted-foreground">
@@ -550,7 +594,23 @@ const PublicStreamerPage = () => {
             </div>
           </div>
         )}
-      </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t bg-muted/30 py-6">
+        <div className="container mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <Zap className="h-4 w-4 text-primary" />
+            <span>Powered by <strong className="text-foreground">Streala</strong></span>
+          </div>
+          <Link 
+            to="/" 
+            className="hover:text-primary transition-colors font-medium"
+          >
+            Seja um Streamer →
+          </Link>
+        </div>
+      </footer>
 
       {/* Purchase Modal */}
       <Dialog open={purchaseModalOpen} onOpenChange={setPurchaseModalOpen}>

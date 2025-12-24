@@ -13,6 +13,7 @@ interface PixPaymentRequest {
   streamer_id: string;
   streamer_handle: string;
   payer_email?: string;
+  buyer_note?: string;
 }
 
 // Tiered commission rates based on transaction amount in BRL
@@ -40,10 +41,22 @@ serve(async (req) => {
     const body: PixPaymentRequest = await req.json();
     console.log("[create-pix-payment] Request body:", JSON.stringify(body));
 
-    const { transaction_id, alert_title, amount_cents, streamer_id, streamer_handle, payer_email } = body;
+    const { transaction_id, alert_title, amount_cents, streamer_id, streamer_handle, payer_email, buyer_note } = body;
 
     if (!transaction_id || !alert_title || !amount_cents || !streamer_id) {
       throw new Error("Missing required fields: transaction_id, alert_title, amount_cents, streamer_id");
+    }
+
+    // Update transaction with buyer note if provided
+    if (buyer_note) {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+      const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      const supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
+      
+      await supabaseClient
+        .from("transactions")
+        .update({ buyer_note })
+        .eq("id", transaction_id);
     }
 
     // Initialize Supabase client

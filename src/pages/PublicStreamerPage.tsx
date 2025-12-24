@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Music, Image as ImageIcon, Video, AlertCircle, Loader2, Copy, CheckCircle2, Clock, PauseCircle } from "lucide-react";
+import { ArrowLeft, Music, Image as ImageIcon, Video, AlertCircle, Loader2, Copy, CheckCircle2, Clock, PauseCircle, MessageSquare } from "lucide-react";
 import { useState, useEffect } from "react";
 
 interface PixData {
@@ -35,6 +35,8 @@ const PublicStreamerPage = () => {
   const [pixModalOpen, setPixModalOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [timeLeft, setTimeLeft] = useState<string>("");
+  const [buyerNote, setBuyerNote] = useState<string>("");
+  const [isPolling, setIsPolling] = useState(false);
 
   // Handle payment return from Mercado Pago
   useEffect(() => {
@@ -88,12 +90,36 @@ const PublicStreamerPage = () => {
     return () => clearInterval(interval);
   }, [pixData?.expires_at, pixModalOpen]);
 
-  // Realtime listener for PIX payment confirmation
+  // Realtime listener for PIX payment confirmation with polling fallback
   useEffect(() => {
     if (!transactionId || !pixModalOpen) return;
 
     console.log("[PublicStreamerPage] Setting up realtime listener for transaction:", transactionId);
 
+    const handlePaymentUpdate = (status: string) => {
+      if (status === 'paid') {
+        setPixModalOpen(false);
+        setPixData(null);
+        setTransactionId(null);
+        setSelectedAlert(null);
+        setBuyerNote("");
+        setIsPolling(false);
+        
+        toast({
+          title: "Pagamento confirmado! ✅",
+          description: "Seu alerta foi adicionado à fila do streamer. Obrigado pela compra!",
+        });
+      } else if (status === 'failed') {
+        setIsPolling(false);
+        toast({
+          title: "Pagamento não aprovado",
+          description: "O pagamento foi recusado. Tente novamente.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    // Realtime subscription
     const channel = supabase
       .channel(`transaction-${transactionId}`)
       .on(
@@ -105,33 +131,37 @@ const PublicStreamerPage = () => {
           filter: `id=eq.${transactionId}`,
         },
         (payload) => {
-          console.log("[PublicStreamerPage] Transaction updated:", payload);
-          const newStatus = payload.new?.status;
-          
-          if (newStatus === 'paid') {
-            setPixModalOpen(false);
-            setPixData(null);
-            setTransactionId(null);
-            setSelectedAlert(null);
-            
-            toast({
-              title: "Pagamento confirmado! ✅",
-              description: "Seu alerta foi adicionado à fila do streamer. Obrigado pela compra!",
-            });
-          } else if (newStatus === 'failed') {
-            toast({
-              title: "Pagamento não aprovado",
-              description: "O pagamento foi recusado. Tente novamente.",
-              variant: "destructive",
-            });
-          }
+          console.log("[PublicStreamerPage] Transaction updated via realtime:", payload);
+          handlePaymentUpdate(payload.new?.status);
         }
       )
       .subscribe();
 
+    // Polling fallback - check every 5 seconds
+    setIsPolling(true);
+    const pollInterval = setInterval(async () => {
+      try {
+        const { data } = await supabase
+          .from("transactions")
+          .select("status")
+          .eq("id", transactionId)
+          .single();
+        
+        if (data && (data.status === 'paid' || data.status === 'failed')) {
+          console.log("[PublicStreamerPage] Transaction updated via polling:", data.status);
+          handlePaymentUpdate(data.status);
+          clearInterval(pollInterval);
+        }
+      } catch (error) {
+        console.error("[PublicStreamerPage] Polling error:", error);
+      }
+    }, 5000);
+
     return () => {
-      console.log("[PublicStreamerPage] Removing realtime channel for transaction:", transactionId);
+      console.log("[PublicStreamerPage] Cleaning up transaction listener:", transactionId);
       supabase.removeChannel(channel);
+      clearInterval(pollInterval);
+      setIsPolling(false);
     };
   }, [transactionId, pixModalOpen]);
 
@@ -214,6 +244,8 @@ const PublicStreamerPage = () => {
             alert_title: selectedAlert.title,
             amount_cents: selectedAlert.price_cents,
             streamer_handle: cleanHandle,
+            streamer_id: streamer.id,
+            buyer_note: buyerNote.trim() || undefined,
           },
         }
       );
@@ -307,6 +339,7 @@ const PublicStreamerPage = () => {
     setPixData(null);
     setSelectedAlert(null);
     setTransactionId(null);
+    setBuyerNote("");
   };
 
   const getMediaIcon = (type: string) => {
@@ -539,6 +572,25 @@ const PublicStreamerPage = () => {
                   <p className="text-muted-foreground">{selectedAlert.description}</p>
                 )}
               </div>
+              
+              {/* Buyer Note Field */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4" />
+                  Mensagem para o streamer (opcional)
+                </label>
+                <textarea
+                  value={buyerNote}
+                  onChange={(e) => setBuyerNote(e.target.value.slice(0, 200))}
+                  placeholder="Ex: Manda salve pro João! 🎉"
+                  className="w-full p-3 rounded-md border border-input bg-background text-sm resize-none h-20"
+                  maxLength={200}
+                />
+                <p className="text-xs text-muted-foreground text-right">
+                  {buyerNote.length}/200 caracteres
+                </p>
+              </div>
+              
               <div className="flex items-center gap-2">
                 <Badge variant="secondary">
                   {getMediaIcon(selectedAlert.media_type)}

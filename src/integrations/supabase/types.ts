@@ -510,6 +510,33 @@ export type Database = {
         }
         Relationships: []
       }
+      public_widget_settings: {
+        Row: {
+          accepting_alerts: boolean | null
+          alert_between_delay_seconds: number | null
+          alert_start_delay_seconds: number | null
+          overlay_image_duration_seconds: number | null
+          public_key: string | null
+          streamer_id: string | null
+          widget_position: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "settings_streamer_id_fkey"
+            columns: ["streamer_id"]
+            isOneToOne: true
+            referencedRelation: "public_streamer_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "settings_streamer_id_fkey"
+            columns: ["streamer_id"]
+            isOneToOne: true
+            referencedRelation: "streamers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       has_role: {

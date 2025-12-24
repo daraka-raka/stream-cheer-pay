@@ -537,7 +537,7 @@ export default function Transactions() {
                                   : "bg-red-500/10 text-red-500"
                               }`}
                             >
-                              {tx.status}
+                              {tx.status === "paid" ? "Pago" : tx.status === "pending" ? "Pendente" : "Falhou"}
                             </span>
                           </TableCell>
                         </TableRow>

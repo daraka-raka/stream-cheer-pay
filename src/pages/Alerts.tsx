@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { useLocation } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -45,6 +46,7 @@ import {
 
 export default function Alerts() {
   const { user } = useAuth();
+  const location = useLocation();
   const [alerts, setAlerts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -52,6 +54,7 @@ export default function Alerts() {
   const [previewAlert, setPreviewAlert] = useState<any | null>(null);
   const [deleteAlertId, setDeleteAlertId] = useState<string | null>(null);
   const [streamerId, setStreamerId] = useState<string | null>(null);
+  const [highlightedAlertId, setHighlightedAlertId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -59,14 +62,48 @@ export default function Alerts() {
     mediaType: "image",
   });
   const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const highlightedRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (user) {
       loadStreamerAndAlerts();
     }
   }, [user]);
+
+  // Handle highlight from Top Alerts navigation
+  useEffect(() => {
+    const state = location.state as { highlightAlertId?: string } | null;
+    if (state?.highlightAlertId && !loading) {
+      setHighlightedAlertId(state.highlightAlertId);
+      
+      // Scroll to highlighted alert after a short delay
+      setTimeout(() => {
+        highlightedRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
+      
+      // Remove highlight after 3 seconds
+      setTimeout(() => {
+        setHighlightedAlertId(null);
+      }, 3000);
+      
+      // Clear the location state
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state, loading]);
+
+  // Handle video preview URL
+  useEffect(() => {
+    if (mediaFile && formData.mediaType === "video") {
+      const url = URL.createObjectURL(mediaFile);
+      setVideoPreviewUrl(url);
+      return () => URL.revokeObjectURL(url);
+    } else {
+      setVideoPreviewUrl(null);
+    }
+  }, [mediaFile, formData.mediaType]);
 
   const loadStreamerAndAlerts = async () => {
     try {
@@ -381,7 +418,12 @@ export default function Alerts() {
             alerts.map((alert) => (
               <Card
                 key={alert.id}
-                className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+                ref={highlightedAlertId === alert.id ? highlightedRef : null}
+                className={`overflow-hidden hover:shadow-lg transition-all cursor-pointer ${
+                  highlightedAlertId === alert.id 
+                    ? "ring-2 ring-primary ring-offset-2 animate-pulse" 
+                    : ""
+                }`}
                 onClick={() => setPreviewAlert(alert)}
               >
                 {(alert.thumb_path || alert.media_type === "image") && (
@@ -564,6 +606,21 @@ export default function Alerts() {
                   />
                   <p className="text-xs text-muted-foreground mt-1">
                     Imagem que aparecerá na galeria antes do vídeo ser reproduzido
+                  </p>
+                </div>
+              )}
+              {/* Video Preview */}
+              {formData.mediaType === "video" && videoPreviewUrl && (
+                <div className="relative">
+                  <video 
+                    src={videoPreviewUrl} 
+                    className="w-full h-32 object-cover rounded"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded">
+                    <Play className="h-8 w-8 text-white" />
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Preview do vídeo selecionado
                   </p>
                 </div>
               )}

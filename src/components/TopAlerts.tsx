@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp } from "lucide-react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 interface TopAlert {
   id: string;
@@ -17,6 +17,12 @@ interface TopAlertsProps {
 }
 
 export const TopAlerts = ({ alerts, loading }: TopAlertsProps) => {
+  const navigate = useNavigate();
+
+  const handleAlertClick = (alertId: string) => {
+    navigate('/alerts', { state: { highlightAlertId: alertId } });
+  };
+
   if (loading) {
     return (
       <Card className="border-border shadow-card">
@@ -66,7 +72,11 @@ export const TopAlerts = ({ alerts, loading }: TopAlertsProps) => {
       <CardContent>
         <div className="space-y-3">
           {alerts.map((alert, index) => (
-            <Link key={alert.id} to="/alerts">
+            <div 
+              key={alert.id} 
+              onClick={() => handleAlertClick(alert.id)}
+              className="cursor-pointer"
+            >
               <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors">
                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
                   {index + 1}
@@ -93,7 +103,7 @@ export const TopAlerts = ({ alerts, loading }: TopAlertsProps) => {
                   </p>
                 </div>
               </div>
-            </Link>
+            </div>
           ))}
         </div>
       </CardContent>

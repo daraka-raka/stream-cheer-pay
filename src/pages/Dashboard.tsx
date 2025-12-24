@@ -451,7 +451,7 @@ const Dashboard = () => {
                   </Tabs>
                 </div>
               </CardHeader>
-              <CardContent className="h-[300px]">
+              <CardContent className="h-[300px] overflow-hidden">
                 <ChartContainer
                   config={{
                     revenue: {
@@ -459,6 +459,7 @@ const Dashboard = () => {
                       color: "hsl(var(--primary))",
                     },
                   }}
+                  className="w-full h-full overflow-hidden"
                 >
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={chartData}>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useNotifications } from "@/hooks/use-notifications";
 import { Card } from "@/components/ui/card";
@@ -23,6 +24,7 @@ const getNotificationIcon = (type: string) => {
 };
 
 export default function Notifications() {
+  const navigate = useNavigate();
   const { notifications, unreadCount, loading, markAsRead, markAllAsRead } = useNotifications();
   const [filter, setFilter] = useState<"all" | "unread">("all");
 
@@ -109,7 +111,11 @@ export default function Notifications() {
                       markAsRead(notification.id);
                     }
                     if (notification.link) {
-                      window.location.href = notification.link;
+                      if (notification.link.startsWith('/')) {
+                        navigate(notification.link);
+                      } else {
+                        window.open(notification.link, '_blank');
+                      }
                     }
                   }}
                 >
@@ -146,7 +152,11 @@ export default function Notifications() {
                           className="h-auto p-0 mt-2 text-primary"
                           onClick={(e) => {
                             e.stopPropagation();
-                            window.location.href = notification.link!;
+                            if (notification.link!.startsWith('/')) {
+                              navigate(notification.link!);
+                            } else {
+                              window.open(notification.link!, '_blank');
+                            }
                           }}
                         >
                           Ver detalhes →

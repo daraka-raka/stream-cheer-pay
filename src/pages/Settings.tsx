@@ -71,6 +71,11 @@ export default function Settings() {
   const [widgetPosition, setWidgetPosition] = useState("center");
   const [alertStartDelay, setAlertStartDelay] = useState(0);
   const [alertBetweenDelay, setAlertBetweenDelay] = useState(1);
+  
+  // Dashboard customization
+  const [showTicketMedio, setShowTicketMedio] = useState(false);
+  const [showTaxaConversao, setShowTaxaConversao] = useState(false);
+  const [showPendentes, setShowPendentes] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -110,6 +115,9 @@ export default function Settings() {
       setWidgetPosition(settings.widget_position || "center");
       setAlertStartDelay(settings.alert_start_delay_seconds ?? 0);
       setAlertBetweenDelay(settings.alert_between_delay_seconds ?? 1);
+      setShowTicketMedio(settings.show_ticket_medio ?? false);
+      setShowTaxaConversao(settings.show_taxa_conversao ?? false);
+      setShowPendentes(settings.show_pendentes ?? false);
     }
   }, [settings]);
 
@@ -302,6 +310,9 @@ export default function Settings() {
           widget_position: widgetPosition,
           alert_start_delay_seconds: alertStartDelay,
           alert_between_delay_seconds: alertBetweenDelay,
+          show_ticket_medio: showTicketMedio,
+          show_taxa_conversao: showTaxaConversao,
+          show_pendentes: showPendentes,
         });
 
       if (error) throw error;
@@ -713,6 +724,52 @@ export default function Settings() {
           </div>
         </Card>
 
+
+        {/* Personalização do Dashboard */}
+        <Card className="p-6">
+          <h2 className="text-xl font-semibold mb-4">Personalização do Dashboard</h2>
+          <p className="text-sm text-muted-foreground mb-4">
+            Escolha quais cards exibir no resumo do Dashboard
+          </p>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Mostrar Ticket Médio</Label>
+                <p className="text-sm text-muted-foreground">
+                  Exibe o valor médio por transação
+                </p>
+              </div>
+              <Switch
+                checked={showTicketMedio}
+                onCheckedChange={setShowTicketMedio}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Mostrar Taxa de Conversão</Label>
+                <p className="text-sm text-muted-foreground">
+                  Exibe a porcentagem de transações pagas
+                </p>
+              </div>
+              <Switch
+                checked={showTaxaConversao}
+                onCheckedChange={setShowTaxaConversao}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Mostrar Pendentes</Label>
+                <p className="text-sm text-muted-foreground">
+                  Exibe quantas transações estão aguardando pagamento
+                </p>
+              </div>
+              <Switch
+                checked={showPendentes}
+                onCheckedChange={setShowPendentes}
+              />
+            </div>
+          </div>
+        </Card>
 
         {/* Preferências Gerais */}
         <Card className="p-6">

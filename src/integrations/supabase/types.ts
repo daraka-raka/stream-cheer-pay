@@ -199,7 +199,10 @@ export type Database = {
           milestone_amount_cents: number | null
           notify_on_milestone: boolean | null
           overlay_image_duration_seconds: number | null
+          show_pendentes: boolean | null
           show_prices: boolean | null
+          show_taxa_conversao: boolean | null
+          show_ticket_medio: boolean | null
           streamer_id: string
           theme: string | null
           webhook_url: string | null
@@ -213,7 +216,10 @@ export type Database = {
           milestone_amount_cents?: number | null
           notify_on_milestone?: boolean | null
           overlay_image_duration_seconds?: number | null
+          show_pendentes?: boolean | null
           show_prices?: boolean | null
+          show_taxa_conversao?: boolean | null
+          show_ticket_medio?: boolean | null
           streamer_id: string
           theme?: string | null
           webhook_url?: string | null
@@ -227,7 +233,10 @@ export type Database = {
           milestone_amount_cents?: number | null
           notify_on_milestone?: boolean | null
           overlay_image_duration_seconds?: number | null
+          show_pendentes?: boolean | null
           show_prices?: boolean | null
+          show_taxa_conversao?: boolean | null
+          show_ticket_medio?: boolean | null
           streamer_id?: string
           theme?: string | null
           webhook_url?: string | null

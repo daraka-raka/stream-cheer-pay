@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { withdrawalSchema } from "@/lib/validations";
+
 import {
   Table,
   TableBody,
@@ -37,9 +37,6 @@ export default function Transactions() {
   const [filteredTransactions, setFilteredTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [streamerId, setStreamerId] = useState<string | null>(null);
-  const [withdrawDialogOpen, setWithdrawDialogOpen] = useState(false);
-  const [withdrawAmount, setWithdrawAmount] = useState("");
-  const [pixKey, setPixKey] = useState("");
   const [availableBalance, setAvailableBalance] = useState(0);
   const [previousWeekBalance, setPreviousWeekBalance] = useState(0);
   
@@ -144,70 +141,6 @@ export default function Transactions() {
     }
   };
 
-  const handleWithdraw = async () => {
-    if (!streamerId) return;
-
-    // Validate with zod schema
-    try {
-      const amountCents = Math.round(parseFloat(withdrawAmount) * 100);
-      
-      const validationData = {
-        pix_key: pixKey.trim(),
-        amount_cents: amountCents
-      };
-      
-      const result = withdrawalSchema.safeParse(validationData);
-      if (!result.success) {
-        const error = result.error.errors[0];
-        toast({
-          title: error.message,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (amountCents < 10000) {
-        toast({
-          title: "Valor mínimo é R$ 100,00",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (amountCents > availableBalance) {
-        toast({
-          title: "Saldo insuficiente",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const { error } = await supabase.from("withdrawals").insert({
-        streamer_id: streamerId,
-        amount_cents: amountCents,
-        pix_key: pixKey,
-        status: "pending",
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Solicitação enviada!",
-        description: "Seu saque será processado em até 2 dias úteis.",
-      });
-
-      setWithdrawDialogOpen(false);
-      setWithdrawAmount("");
-      setPixKey("");
-      loadData();
-    } catch (error: any) {
-      toast({
-        title: "Erro ao solicitar saque",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
 
   const applyFilters = () => {
     let filtered = [...transactions];
@@ -327,14 +260,6 @@ export default function Transactions() {
               Histórico de vendas e arrecadação
             </p>
           </div>
-          <Button
-            onClick={() => setWithdrawDialogOpen(true)}
-            disabled={availableBalance < 10000}
-            className="gap-2"
-          >
-            <Wallet className="h-4 w-4" />
-            Solicitar Saque
-          </Button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -577,53 +502,6 @@ export default function Transactions() {
           </div>
         </Card>
 
-        {/* Withdraw Dialog */}
-        <Dialog open={withdrawDialogOpen} onOpenChange={setWithdrawDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Solicitar Saque</DialogTitle>
-              <DialogDescription>
-                Saldo disponível: R$ {(availableBalance / 100).toFixed(2)}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div>
-                <Label htmlFor="amount">Valor do Saque (mín. R$ 100,00)</Label>
-                <Input
-                  id="amount"
-                  type="number"
-                  min="100"
-                  step="0.01"
-                  placeholder="100.00"
-                  value={withdrawAmount}
-                  onChange={(e) => setWithdrawAmount(e.target.value)}
-                />
-              </div>
-              <div>
-                <Label htmlFor="pix">Chave PIX</Label>
-                <Input
-                  id="pix"
-                  placeholder="Digite sua chave PIX"
-                  value={pixKey}
-                  onChange={(e) => setPixKey(e.target.value)}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setWithdrawDialogOpen(false);
-                  setWithdrawAmount("");
-                  setPixKey("");
-                }}
-              >
-                Cancelar
-              </Button>
-              <Button onClick={handleWithdraw}>Solicitar Saque</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </div>
     </DashboardLayout>
   );

@@ -434,8 +434,16 @@ export default function Alerts() {
                   />
                 )}
                 {alert.media_type === "video" && !alert.thumb_path && (
-                  <div className="w-full h-48 bg-muted flex items-center justify-center">
-                    <Play className="h-12 w-12 text-muted-foreground" />
+                  <div className="relative w-full h-48 bg-muted">
+                    <video
+                      src={alert.media_path}
+                      className="w-full h-full object-cover"
+                      preload="metadata"
+                      muted
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                      <Play className="h-12 w-12 text-white" />
+                    </div>
                   </div>
                 )}
                 {alert.media_type === "audio" && !alert.thumb_path && (

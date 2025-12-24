@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { Zap, DollarSign, TrendingUp, Copy, ExternalLink, TrendingDown, ArrowUpRight, ArrowDownRight, Target } from "lucide-react";
+import { Zap, DollarSign, TrendingUp, Copy, ExternalLink, TrendingDown, ArrowUpRight, ArrowDownRight, Target, ShoppingCart, Clock, Receipt } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
@@ -31,6 +31,9 @@ const Dashboard = () => {
     alertsCount: 0,
     queueCount: 0,
     conversionRate: 0,
+    totalTransactions: 0,
+    avgTicket: 0,
+    pendingCount: 0,
   });
   const [loading, setLoading] = useState(true);
   const [chartData, setChartData] = useState<any[]>([]);
@@ -120,9 +123,15 @@ const Dashboard = () => {
       const totalTx = allTransactions?.length || 0;
       const paidTx = allTransactions?.filter(t => t.status === "paid").length || 0;
       const conversionRate = totalTx > 0 ? (paidTx / totalTx) * 100 : 0;
+      
+      // Average ticket
+      const avgTicket = paidTx > 0 ? (totalRevenue / 100) / paidTx : 0;
+      
+      // Pending transactions
+      const pendingCount = allTransactions?.filter(t => t.status === "pending").length || 0;
 
       // Status chart data
-      const pending = allTransactions?.filter(t => t.status === "pending").length || 0;
+      const pending = pendingCount;
       const paid = paidTx;
       const failed = allTransactions?.filter(t => t.status === "failed").length || 0;
 
@@ -153,6 +162,9 @@ const Dashboard = () => {
         alertsCount: alertsCount || 0,
         queueCount: queueCount || 0,
         conversionRate,
+        totalTransactions: paidTx,
+        avgTicket,
+        pendingCount,
       });
     } catch (error) {
       console.error("Error loading stats:", error);
@@ -327,7 +339,7 @@ const Dashboard = () => {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
             <Card className="border-border shadow-card hover:shadow-glow transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium">Arrecadação Total</CardTitle>
@@ -337,6 +349,9 @@ const Dashboard = () => {
                 <div className="text-2xl font-bold">
                   R$ {loading ? "..." : stats.totalRevenue.toFixed(2)}
                 </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {stats.totalTransactions} vendas
+                </p>
               </CardContent>
             </Card>
 
@@ -363,6 +378,21 @@ const Dashboard = () => {
 
             <Card className="border-border shadow-card hover:shadow-glow transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">Ticket Médio</CardTitle>
+                <Receipt className="h-4 w-4 text-accent" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  R$ {loading ? "..." : stats.avgTicket.toFixed(2)}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Por transação
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border shadow-card hover:shadow-glow transition-shadow">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium">Taxa de Conversão</CardTitle>
                 <Target className="h-4 w-4 text-accent" />
               </CardHeader>
@@ -372,6 +402,19 @@ const Dashboard = () => {
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
                   Transações pagas / total
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border shadow-card hover:shadow-glow transition-shadow">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">Pendentes</CardTitle>
+                <Clock className="h-4 w-4 text-yellow-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{loading ? "..." : stats.pendingCount}</div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Aguardando pagamento
                 </p>
               </CardContent>
             </Card>

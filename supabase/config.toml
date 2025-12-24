@@ -16,3 +16,6 @@ verify_jwt = false
 
 [functions.mp-exchange-token]
 verify_jwt = false
+
+[functions.refresh-mp-token]
+verify_jwt = false

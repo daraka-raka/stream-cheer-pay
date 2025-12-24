@@ -88,6 +88,53 @@ const PublicStreamerPage = () => {
     return () => clearInterval(interval);
   }, [pixData?.expires_at, pixModalOpen]);
 
+  // Realtime listener for PIX payment confirmation
+  useEffect(() => {
+    if (!transactionId || !pixModalOpen) return;
+
+    console.log("[PublicStreamerPage] Setting up realtime listener for transaction:", transactionId);
+
+    const channel = supabase
+      .channel(`transaction-${transactionId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'transactions',
+          filter: `id=eq.${transactionId}`,
+        },
+        (payload) => {
+          console.log("[PublicStreamerPage] Transaction updated:", payload);
+          const newStatus = payload.new?.status;
+          
+          if (newStatus === 'paid') {
+            setPixModalOpen(false);
+            setPixData(null);
+            setTransactionId(null);
+            setSelectedAlert(null);
+            
+            toast({
+              title: "Pagamento confirmado! ✅",
+              description: "Seu alerta foi adicionado à fila do streamer. Obrigado pela compra!",
+            });
+          } else if (newStatus === 'failed') {
+            toast({
+              title: "Pagamento não aprovado",
+              description: "O pagamento foi recusado. Tente novamente.",
+              variant: "destructive",
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log("[PublicStreamerPage] Removing realtime channel for transaction:", transactionId);
+      supabase.removeChannel(channel);
+    };
+  }, [transactionId, pixModalOpen]);
+
   const { data: streamer, isLoading: streamerLoading } = useQuery({
     queryKey: ["public-streamer", cleanHandle],
     queryFn: async () => {

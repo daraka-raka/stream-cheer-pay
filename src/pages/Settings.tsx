@@ -315,22 +315,42 @@ export default function Settings() {
                     <p className="text-sm text-muted-foreground">
                       ID da conta: {mpConfig.mp_user_id}
                     </p>
-                    <p className="text-sm text-muted-foreground">
-                      Comissão da plataforma: {((mpConfig.commission_rate || 0.10) * 100).toFixed(0)}%
-                    </p>
                   </div>
                 </div>
                 <Button 
                   variant="outline" 
                   size="sm"
                   onClick={() => {
-                    // For now, just show a message. Full disconnect would require edge function
                     toast.info("Para desconectar, entre em contato com o suporte.");
                   }}
                 >
                   Desconectar
                 </Button>
               </div>
+              
+              {/* Tiered commission table */}
+              <div className="p-4 bg-muted/30 rounded-lg">
+                <p className="font-medium mb-3">Taxas da plataforma (escalonadas):</p>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="flex justify-between p-2 bg-background rounded">
+                    <span>R$ 0 - R$ 500</span>
+                    <span className="font-medium">5%</span>
+                  </div>
+                  <div className="flex justify-between p-2 bg-background rounded">
+                    <span>R$ 500 - R$ 1.000</span>
+                    <span className="font-medium">4%</span>
+                  </div>
+                  <div className="flex justify-between p-2 bg-background rounded">
+                    <span>R$ 1.000 - R$ 5.000</span>
+                    <span className="font-medium">3%</span>
+                  </div>
+                  <div className="flex justify-between p-2 bg-background rounded">
+                    <span>Acima de R$ 5.000</span>
+                    <span className="font-medium">2,5%</span>
+                  </div>
+                </div>
+              </div>
+              
               <p className="text-sm text-muted-foreground">
                 Você receberá os pagamentos diretamente na sua conta do Mercado Pago, 
                 já com a comissão da plataforma descontada automaticamente.
@@ -362,7 +382,7 @@ export default function Settings() {
                   const authUrl = `https://auth.mercadopago.com.br/authorization?` +
                     `client_id=${MP_CLIENT_ID}&` +
                     `response_type=code&` +
-                    `platform_id=mp&` +
+                    
                     `redirect_uri=${encodeURIComponent(redirectUri)}&` +
                     `state=${state}`;
                   

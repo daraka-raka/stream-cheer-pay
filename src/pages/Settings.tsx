@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Copy, CheckCircle, AlertCircle, Upload, Mail, Pause, Play, CreditCard, Loader2, ExternalLink } from "lucide-react";
+import { Copy, CheckCircle, AlertCircle, Upload, Mail, Pause, Play, CreditCard, Loader2, ExternalLink, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import { useTheme } from "next-themes";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,6 +27,15 @@ const generateHandle = (displayName: string): string => {
     .replace(/-+/g, "_") // Replace hyphens with underscores
     .replace(/_+/g, "_") // Remove duplicate underscores
     .replace(/^_|_$/g, ""); // Remove leading/trailing underscores
+};
+
+// Helper function to get commission tier based on monthly revenue (in cents)
+const getCommissionTier = (revenueCents: number): { tier: number; rate: number } => {
+  const revenueReais = revenueCents / 100;
+  if (revenueReais < 500) return { tier: 0, rate: 5 };
+  if (revenueReais < 1000) return { tier: 1, rate: 4 };
+  if (revenueReais < 5000) return { tier: 2, rate: 3 };
+  return { tier: 3, rate: 2.5 };
 };
 
 // MP Client ID will be loaded from edge function or environment
@@ -49,6 +58,9 @@ export default function Settings() {
   // Mercado Pago config
   const [mpConfig, setMpConfig] = useState<any>(null);
   const [mpLoading, setMpLoading] = useState(false);
+  
+  // Monthly revenue state
+  const [monthlyRevenue, setMonthlyRevenue] = useState(0);
   
   // Advanced preferences
   const [acceptingAlerts, setAcceptingAlerts] = useState(true);
@@ -83,6 +95,7 @@ export default function Settings() {
       setBio(streamer.bio || "");
       setPreviewPhoto(streamer.photo_url || null);
       loadMpConfig(streamer.id);
+      loadMonthlyRevenue(streamer.id);
     }
   }, [streamer]);
 
@@ -113,6 +126,28 @@ export default function Settings() {
       }
     } catch (error) {
       console.error("Error loading MP config:", error);
+    }
+  };
+
+  const loadMonthlyRevenue = async (streamerId: string) => {
+    try {
+      // Get first day of current month
+      const now = new Date();
+      const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      
+      const { data, error } = await supabase
+        .from("transactions")
+        .select("amount_cents")
+        .eq("streamer_id", streamerId)
+        .eq("status", "paid")
+        .gte("created_at", firstDayOfMonth);
+
+      if (error) throw error;
+
+      const total = data?.reduce((sum, tx) => sum + tx.amount_cents, 0) || 0;
+      setMonthlyRevenue(total);
+    } catch (error) {
+      console.error("Error loading monthly revenue:", error);
     }
   };
 
@@ -328,27 +363,53 @@ export default function Settings() {
                 </Button>
               </div>
               
+              {/* Monthly revenue display */}
+              <div className="p-4 bg-primary/10 border border-primary/20 rounded-lg">
+                <div className="flex items-center gap-2 mb-1">
+                  <TrendingUp className="h-4 w-4 text-primary" />
+                  <p className="font-medium text-primary">Seu faturamento este mês</p>
+                </div>
+                <p className="text-2xl font-bold">
+                  R$ {(monthlyRevenue / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Taxa atual: {getCommissionTier(monthlyRevenue).rate}%
+                </p>
+              </div>
+
               {/* Tiered commission table */}
               <div className="p-4 bg-muted/30 rounded-lg">
-                <p className="font-medium mb-3">Taxas da plataforma (escalonadas):</p>
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div className="flex justify-between p-2 bg-background rounded">
-                    <span>R$ 0 - R$ 500</span>
-                    <span className="font-medium">5%</span>
-                  </div>
-                  <div className="flex justify-between p-2 bg-background rounded">
-                    <span>R$ 500 - R$ 1.000</span>
-                    <span className="font-medium">4%</span>
-                  </div>
-                  <div className="flex justify-between p-2 bg-background rounded">
-                    <span>R$ 1.000 - R$ 5.000</span>
-                    <span className="font-medium">3%</span>
-                  </div>
-                  <div className="flex justify-between p-2 bg-background rounded">
-                    <span>Acima de R$ 5.000</span>
-                    <span className="font-medium">2,5%</span>
-                  </div>
+                <p className="font-medium mb-3">Faixas de Comissão Mensal:</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                  {[
+                    { range: "R$ 0 - R$ 500", rate: "5%", tier: 0 },
+                    { range: "R$ 500 - R$ 1.000", rate: "4%", tier: 1 },
+                    { range: "R$ 1.000 - R$ 5.000", rate: "3%", tier: 2 },
+                    { range: "Acima de R$ 5.000", rate: "2,5%", tier: 3 },
+                  ].map((item) => {
+                    const currentTier = getCommissionTier(monthlyRevenue).tier;
+                    const isActive = item.tier === currentTier;
+                    return (
+                      <div 
+                        key={item.tier}
+                        className={`flex justify-between items-center p-3 rounded-lg transition-all ${
+                          isActive 
+                            ? "bg-primary/20 border-2 border-primary ring-2 ring-primary/30" 
+                            : "bg-background border border-border"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          {isActive && <CheckCircle className="h-4 w-4 text-primary" />}
+                          <span className={isActive ? "font-medium" : ""}>{item.range}</span>
+                        </div>
+                        <span className={`font-bold ${isActive ? "text-primary" : ""}`}>{item.rate}</span>
+                      </div>
+                    );
+                  })}
                 </div>
+                <p className="text-xs text-muted-foreground mt-3">
+                  A taxa é calculada com base no seu faturamento mensal e reinicia todo dia 1º.
+                </p>
               </div>
               
               <p className="text-sm text-muted-foreground">

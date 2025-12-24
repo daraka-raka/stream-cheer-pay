@@ -6,6 +6,21 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Tiered commission rates based on transaction amount in BRL
+function getCommissionRate(amountCents: number): number {
+  const amountBRL = amountCents / 100;
+  
+  if (amountBRL <= 500) {
+    return 0.05; // 5%
+  } else if (amountBRL <= 1000) {
+    return 0.04; // 4%
+  } else if (amountBRL <= 5000) {
+    return 0.03; // 3%
+  } else {
+    return 0.025; // 2.5%
+  }
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -99,11 +114,20 @@ serve(async (req) => {
         });
       }
 
-      // Calculate fees (example: 3.99% Mercado Pago + 5% Streala)
+      // Calculate fees using tiered commission rates
       const amountCents = Math.round(payment.transaction_amount * 100);
-      const feeMpCents = Math.round(amountCents * 0.0399);
-      const feeStrealaCents = Math.round(amountCents * 0.05);
+      const commissionRate = getCommissionRate(amountCents);
+      const feeMpCents = Math.round(amountCents * 0.0399); // Mercado Pago fee
+      const feeStrealaCents = Math.round(amountCents * commissionRate); // Tiered platform fee
       const amountStreamerCents = amountCents - feeMpCents - feeStrealaCents;
+      
+      console.log("[mercadopago-webhook] Fee calculation:", {
+        amount_brl: payment.transaction_amount,
+        commission_rate: `${commissionRate * 100}%`,
+        fee_mp: feeMpCents / 100,
+        fee_streala: feeStrealaCents / 100,
+        streamer_receives: amountStreamerCents / 100
+      });
 
       // Update transaction status
       const { error: updateError } = await supabase

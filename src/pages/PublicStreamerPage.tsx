@@ -37,6 +37,7 @@ const PublicStreamerPage = () => {
   const [timeLeft, setTimeLeft] = useState<string>("");
   const [buyerNote, setBuyerNote] = useState<string>("");
   const [isPolling, setIsPolling] = useState(false);
+  const [honeypot, setHoneypot] = useState<string>(""); // Honeypot anti-spam field
 
   // Handle payment return from Mercado Pago
   useEffect(() => {
@@ -246,6 +247,7 @@ const PublicStreamerPage = () => {
             streamer_handle: cleanHandle,
             streamer_id: streamer.id,
             buyer_note: buyerNote.trim() || undefined,
+            hp_field: honeypot, // Honeypot field for anti-spam
           },
         }
       );
@@ -340,6 +342,7 @@ const PublicStreamerPage = () => {
     setSelectedAlert(null);
     setTransactionId(null);
     setBuyerNote("");
+    setHoneypot("");
   };
 
   const getMediaIcon = (type: string) => {
@@ -649,6 +652,24 @@ const PublicStreamerPage = () => {
                 <p className="text-xs text-muted-foreground text-right">
                   {buyerNote.length}/200 caracteres
                 </p>
+              </div>
+
+              {/* Honeypot field - hidden from humans, visible to bots */}
+              <div 
+                className="absolute left-[-9999px] top-[-9999px]" 
+                aria-hidden="true"
+                tabIndex={-1}
+              >
+                <label htmlFor="hp_field">Leave this empty</label>
+                <input
+                  type="text"
+                  id="hp_field"
+                  name="hp_field"
+                  value={honeypot}
+                  onChange={(e) => setHoneypot(e.target.value)}
+                  autoComplete="off"
+                  tabIndex={-1}
+                />
               </div>
               
               <div className="flex items-center gap-2">

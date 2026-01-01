@@ -14,6 +14,30 @@ interface PixPaymentRequest {
   streamer_handle: string;
   payer_email?: string;
   buyer_note?: string;
+  hp_field?: string; // Honeypot field - should be empty
+}
+
+// Simple in-memory rate limiter (resets on function cold start)
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT_WINDOW_MS = 60000; // 1 minute
+const RATE_LIMIT_MAX_REQUESTS = 3; // Max 3 requests per minute per IP
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+  
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return false;
+  }
+  
+  entry.count++;
+  if (entry.count > RATE_LIMIT_MAX_REQUESTS) {
+    console.warn(`[create-pix-payment] Rate limit exceeded for IP: ${ip}`);
+    return true;
+  }
+  
+  return false;
 }
 
 // Tiered commission rates based on transaction amount in BRL
@@ -37,11 +61,45 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Get client IP for rate limiting
+  const clientIP = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || 
+                   req.headers.get("cf-connecting-ip") || 
+                   "unknown";
+  
+  // Check rate limit
+  if (isRateLimited(clientIP)) {
+    console.log(`[create-pix-payment] Rate limited request from IP: ${clientIP}`);
+    return new Response(
+      JSON.stringify({ error: "Muitas requisições. Aguarde um minuto e tente novamente." }),
+      {
+        status: 429,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
+  }
+
   try {
     const body: PixPaymentRequest = await req.json();
     console.log("[create-pix-payment] Request body:", JSON.stringify(body));
 
-    const { transaction_id, alert_title, amount_cents, streamer_id, streamer_handle, payer_email, buyer_note } = body;
+    const { transaction_id, alert_title, amount_cents, streamer_id, streamer_handle, payer_email, buyer_note, hp_field } = body;
+
+    // Honeypot check - if filled, it's a bot
+    if (hp_field && hp_field.trim() !== "") {
+      console.warn(`[create-pix-payment] Honeypot triggered from IP: ${clientIP}`);
+      // Return fake success to confuse bots
+      return new Response(
+        JSON.stringify({ 
+          payment_id: "fake_" + Date.now(),
+          qr_code_base64: "",
+          qr_code: "",
+          expires_at: new Date(Date.now() + 300000).toISOString(),
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
 
     if (!transaction_id || !alert_title || !amount_cents || !streamer_id) {
       throw new Error("Missing required fields: transaction_id, alert_title, amount_cents, streamer_id");

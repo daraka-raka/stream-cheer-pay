@@ -1,10 +1,28 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+// Allowed origins for CORS - restrict to known domains
+const ALLOWED_ORIGINS = [
+  "https://streala.app",
+  "https://www.streala.app",
+  "https://lovable.dev",
+  // Allow preview URLs during development
+];
+
+function getCorsHeaders(origin: string | null): Record<string, string> {
+  // Check if origin is allowed or is a Lovable preview URL
+  const isAllowed = origin && (
+    ALLOWED_ORIGINS.includes(origin) ||
+    origin.endsWith(".lovableproject.com") ||
+    origin.endsWith(".lovable.app")
+  );
+  
+  return {
+    "Access-Control-Allow-Origin": isAllowed ? origin : ALLOWED_ORIGINS[0],
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+  };
+}
 
 interface PixPaymentRequest {
   transaction_id: string;
@@ -56,6 +74,9 @@ function getCommissionRate(amountCents: number): number {
 }
 
 serve(async (req) => {
+  const origin = req.headers.get("origin");
+  const corsHeaders = getCorsHeaders(origin);
+
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -80,7 +101,7 @@ serve(async (req) => {
 
   try {
     const body: PixPaymentRequest = await req.json();
-    console.log("[create-pix-payment] Request body:", JSON.stringify(body));
+    console.log("[create-pix-payment] Request body received");
 
     const { transaction_id, alert_title, amount_cents, streamer_id, streamer_handle, payer_email, buyer_note, hp_field } = body;
 
@@ -101,9 +122,53 @@ serve(async (req) => {
       );
     }
 
-    if (!transaction_id || !alert_title || !amount_cents || !streamer_id) {
-      throw new Error("Missing required fields: transaction_id, alert_title, amount_cents, streamer_id");
+    // Input validation
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const handleRegex = /^[a-z0-9_-]+$/i;
+
+    if (!transaction_id || !uuidRegex.test(transaction_id)) {
+      return new Response(
+        JSON.stringify({ error: "ID de transação inválido" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
+
+    if (!streamer_id || !uuidRegex.test(streamer_id)) {
+      return new Response(
+        JSON.stringify({ error: "ID de streamer inválido" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!alert_title || typeof alert_title !== "string" || alert_title.length > 200) {
+      return new Response(
+        JSON.stringify({ error: "Título do alerta inválido" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!streamer_handle || !handleRegex.test(streamer_handle) || streamer_handle.length > 50) {
+      return new Response(
+        JSON.stringify({ error: "Handle do streamer inválido" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!amount_cents || typeof amount_cents !== "number" || amount_cents < 100 || amount_cents > 100000000) {
+      return new Response(
+        JSON.stringify({ error: "Valor inválido" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (buyer_note && (typeof buyer_note !== "string" || buyer_note.length > 200)) {
+      return new Response(
+        JSON.stringify({ error: "Mensagem muito longa" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log("[create-pix-payment] Validation passed for transaction:", transaction_id);
 
     // Update transaction with buyer note if provided
     if (buyer_note) {

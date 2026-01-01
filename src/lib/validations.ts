@@ -1,5 +1,30 @@
 import { z } from 'zod';
 
+// PIX Payment request validation (matches edge function interface)
+export const pixPaymentSchema = z.object({
+  transaction_id: z.string().uuid("ID da transação inválido"),
+  alert_title: z.string()
+    .min(1, "Título é obrigatório")
+    .max(200, "Título muito longo"),
+  amount_cents: z.number()
+    .int("Valor deve ser inteiro")
+    .min(100, "Valor mínimo é R$ 1,00")
+    .max(100000000, "Valor máximo é R$ 1.000.000,00"),
+  streamer_id: z.string().uuid("ID do streamer inválido"),
+  streamer_handle: z.string()
+    .min(1, "Handle é obrigatório")
+    .max(50, "Handle muito longo")
+    .regex(/^[a-z0-9_-]+$/i, "Handle contém caracteres inválidos"),
+  payer_email: z.string()
+    .email("Email inválido")
+    .max(255)
+    .optional(),
+  buyer_note: z.string()
+    .max(200, "Mensagem deve ter no máximo 200 caracteres")
+    .optional(),
+  hp_field: z.string().optional(), // Honeypot field
+});
+
 // Transaction validation
 export const buyerNoteSchema = z.object({
   buyer_note: z.string().max(500, "Nota do comprador deve ter no máximo 500 caracteres").optional(),
@@ -60,6 +85,7 @@ export const authSchema = z.object({
 });
 
 // Type exports
+export type PixPaymentInput = z.infer<typeof pixPaymentSchema>;
 export type BuyerNoteInput = z.infer<typeof buyerNoteSchema>;
 export type ProfileInput = z.infer<typeof profileSchema>;
 export type AlertInput = z.infer<typeof alertSchema>;

@@ -1,9 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+// Webhook-specific CORS - restrict to Mercado Pago IPs and internal calls
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": "*", // Webhooks come from MP servers, not browsers
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-signature, x-request-id",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
 // HMAC signature validation for Mercado Pago webhooks

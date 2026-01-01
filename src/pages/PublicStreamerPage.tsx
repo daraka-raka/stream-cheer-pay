@@ -10,7 +10,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
 import { Music, Image as ImageIcon, Video, AlertCircle, Loader2, Copy, CheckCircle2, Clock, PauseCircle, MessageSquare, Sparkles, Zap } from "lucide-react";
 import { useState, useEffect } from "react";
-
+import { sanitizeErrorMessage, createUserError } from "@/lib/error-utils";
+import { pixPaymentSchema } from "@/lib/validations";
 interface PixData {
   qr_code_base64: string;
   qr_code: string;
@@ -263,11 +264,12 @@ const PublicStreamerPage = () => {
       setPurchaseModalOpen(false);
       setPixModalOpen(true);
       setIsProcessingPayment(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("[PublicStreamerPage] Purchase error:", error);
+      const userError = createUserError(error, "payment");
       toast({
-        title: "Erro ao processar compra",
-        description: error.message,
+        title: userError.title,
+        description: userError.description,
         variant: "destructive",
       });
       setIsProcessingPayment(false);
@@ -307,10 +309,11 @@ const PublicStreamerPage = () => {
       setPaymentDialogOpen(false);
       setTransactionId(null);
       setSelectedAlert(null);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const userError = createUserError(error, "payment");
       toast({
-        title: "Erro ao confirmar pagamento",
-        description: error.message,
+        title: userError.title,
+        description: userError.description,
         variant: "destructive",
       });
     }

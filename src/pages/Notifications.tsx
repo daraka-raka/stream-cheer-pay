@@ -35,25 +35,25 @@ export default function Notifications() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
           <div>
-            <h1 className="text-3xl font-bold flex items-center gap-3">
-              <Bell className="h-8 w-8" />
+            <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2 sm:gap-3 flex-wrap">
+              <Bell className="h-6 w-6 sm:h-8 sm:w-8" />
               Notificações
               {unreadCount > 0 && (
-                <Badge variant="destructive" className="text-sm">
+                <Badge variant="destructive" className="text-xs sm:text-sm">
                   {unreadCount}
                 </Badge>
               )}
             </h1>
-            <p className="text-muted-foreground mt-1">
+            <p className="text-muted-foreground mt-1 text-sm sm:text-base">
               Acompanhe todas as atualizações da sua conta
             </p>
           </div>
           {unreadCount > 0 && (
-            <Button onClick={markAllAsRead} variant="outline" className="gap-2">
+            <Button onClick={markAllAsRead} variant="outline" className="gap-2 w-full sm:w-auto">
               <CheckCheck className="h-4 w-4" />
-              Marcar todas como lidas
+              <span className="sm:inline">Marcar todas como lidas</span>
             </Button>
           )}
         </div>
@@ -119,29 +119,29 @@ export default function Notifications() {
                     }
                   }}
                 >
-                  <div className="flex gap-4">
+                  <div className="flex gap-3 sm:gap-4">
                     <div className="flex-shrink-0 mt-1">
                       {getNotificationIcon(notification.type)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <h3 className="font-semibold text-base">
-                          {notification.title}
-                        </h3>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          <span className="text-xs text-muted-foreground flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {formatDistanceToNow(new Date(notification.created_at), {
-                              addSuffix: true,
-                              locale: ptBR,
-                            })}
-                          </span>
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 sm:gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="font-semibold text-sm sm:text-base">
+                            {notification.title}
+                          </h3>
                           {!notification.read && (
                             <Badge variant="default" className="text-xs">
                               Novo
                             </Badge>
                           )}
                         </div>
+                        <span className="text-xs text-muted-foreground flex items-center gap-1 flex-shrink-0">
+                          <Clock className="h-3 w-3" />
+                          {formatDistanceToNow(new Date(notification.created_at), {
+                            addSuffix: true,
+                            locale: ptBR,
+                          })}
+                        </span>
                       </div>
                       <p className="text-sm text-muted-foreground mt-1">
                         {notification.message}

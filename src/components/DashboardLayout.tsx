@@ -15,7 +15,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           <header className="sticky top-0 z-10 flex h-14 items-center border-b border-border bg-background px-4">
             <SidebarTrigger className="-ml-1" />
           </header>
-          <main className="p-6 md:p-8">{children}</main>
+          <main className="p-4 md:p-6 lg:p-8">{children}</main>
         </SidebarInset>
       </div>
     </SidebarProvider>

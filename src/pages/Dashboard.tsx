@@ -368,42 +368,42 @@ const Dashboard = () => {
       <DashboardLayout>
         <div className="space-y-8">
           <div>
-            <h1 className="text-4xl font-bold mb-2">Bem-vindo, {streamer?.display_name}!</h1>
+            <h1 className="text-2xl md:text-4xl font-bold mb-2">Bem-vindo, {streamer?.display_name}!</h1>
             <p className="text-muted-foreground">Acompanhe seu desempenho e gerencie seus alertas.</p>
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-4">
             <Card className="border-border shadow-card hover:shadow-glow transition-shadow">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Arrecadação Total</CardTitle>
-                <DollarSign className="h-4 w-4 text-primary" />
+              <CardHeader className="flex flex-row items-center justify-between pb-2 p-3 sm:p-6 sm:pb-2">
+                <CardTitle className="text-xs sm:text-sm font-medium">Arrecadação Total</CardTitle>
+                <DollarSign className="h-4 w-4 text-primary hidden sm:block" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
+              <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+                <div className="text-lg sm:text-2xl font-bold">
                   R$ {loading ? "..." : stats.totalRevenue.toFixed(2)}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs text-muted-foreground mt-1 hidden sm:block">
                   {stats.totalTransactions} vendas
                 </p>
               </CardContent>
             </Card>
 
             <Card className="border-border shadow-card hover:shadow-glow transition-shadow">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Últimos 7 Dias</CardTitle>
+              <CardHeader className="flex flex-row items-center justify-between pb-2 p-3 sm:p-6 sm:pb-2">
+                <CardTitle className="text-xs sm:text-sm font-medium">Últimos 7 Dias</CardTitle>
                 {stats.last7DaysGrowth >= 0 ? (
-                  <ArrowUpRight className="h-4 w-4 text-green-500" />
+                  <ArrowUpRight className="h-4 w-4 text-green-500 hidden sm:block" />
                 ) : (
-                  <ArrowDownRight className="h-4 w-4 text-red-500" />
+                  <ArrowDownRight className="h-4 w-4 text-red-500 hidden sm:block" />
                 )}
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
+              <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+                <div className="text-lg sm:text-2xl font-bold">
                   R$ {loading ? "..." : stats.last7Days.toFixed(2)}
                 </div>
                 {!loading && (
-                  <p className={`text-xs mt-1 ${stats.last7DaysGrowth >= 0 ? "text-green-500" : "text-red-500"}`}>
+                  <p className={`text-xs mt-1 hidden sm:block ${stats.last7DaysGrowth >= 0 ? "text-green-500" : "text-red-500"}`}>
                     {stats.last7DaysGrowth >= 0 ? "+" : ""}{stats.last7DaysGrowth.toFixed(1)}% vs semana anterior
                   </p>
                 )}
@@ -412,15 +412,15 @@ const Dashboard = () => {
 
             {dashboardSettings.showTicketMedio && (
               <Card className="border-border shadow-card hover:shadow-glow transition-shadow">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Ticket Médio</CardTitle>
-                  <Receipt className="h-4 w-4 text-accent" />
+                <CardHeader className="flex flex-row items-center justify-between pb-2 p-3 sm:p-6 sm:pb-2">
+                  <CardTitle className="text-xs sm:text-sm font-medium">Ticket Médio</CardTitle>
+                  <Receipt className="h-4 w-4 text-accent hidden sm:block" />
                 </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
+                <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+                  <div className="text-lg sm:text-2xl font-bold">
                     R$ {loading ? "..." : stats.avgTicket.toFixed(2)}
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-xs text-muted-foreground mt-1 hidden sm:block">
                     Por transação
                   </p>
                 </CardContent>
@@ -429,15 +429,15 @@ const Dashboard = () => {
 
             {dashboardSettings.showTaxaConversao && (
               <Card className="border-border shadow-card hover:shadow-glow transition-shadow">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Taxa de Conversão</CardTitle>
-                  <Target className="h-4 w-4 text-accent" />
+                <CardHeader className="flex flex-row items-center justify-between pb-2 p-3 sm:p-6 sm:pb-2">
+                  <CardTitle className="text-xs sm:text-sm font-medium">Taxa de Conversão</CardTitle>
+                  <Target className="h-4 w-4 text-accent hidden sm:block" />
                 </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
+                <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+                  <div className="text-lg sm:text-2xl font-bold">
                     {loading ? "..." : `${stats.conversionRate.toFixed(1)}%`}
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-xs text-muted-foreground mt-1 hidden sm:block">
                     Transações pagas / total
                   </p>
                 </CardContent>
@@ -446,13 +446,13 @@ const Dashboard = () => {
 
             {dashboardSettings.showPendentes && (
               <Card className="border-border shadow-card hover:shadow-glow transition-shadow">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Pendentes</CardTitle>
-                  <Clock className="h-4 w-4 text-yellow-500" />
+                <CardHeader className="flex flex-row items-center justify-between pb-2 p-3 sm:p-6 sm:pb-2">
+                  <CardTitle className="text-xs sm:text-sm font-medium">Pendentes</CardTitle>
+                  <Clock className="h-4 w-4 text-yellow-500 hidden sm:block" />
                 </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{loading ? "..." : stats.pendingCount}</div>
-                  <p className="text-xs text-muted-foreground mt-1">
+                <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+                  <div className="text-lg sm:text-2xl font-bold">{loading ? "..." : stats.pendingCount}</div>
+                  <p className="text-xs text-muted-foreground mt-1 hidden sm:block">
                     Aguardando pagamento
                   </p>
                 </CardContent>
@@ -460,13 +460,13 @@ const Dashboard = () => {
             )}
 
             <Card className="border-border shadow-card hover:shadow-glow transition-shadow">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Fila Atual</CardTitle>
-                <Zap className="h-4 w-4 text-primary" />
+              <CardHeader className="flex flex-row items-center justify-between pb-2 p-3 sm:p-6 sm:pb-2">
+                <CardTitle className="text-xs sm:text-sm font-medium">Fila Atual</CardTitle>
+                <Zap className="h-4 w-4 text-primary hidden sm:block" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{loading ? "..." : stats.queueCount}</div>
-                <p className="text-xs text-muted-foreground mt-1">
+              <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+                <div className="text-lg sm:text-2xl font-bold">{loading ? "..." : stats.queueCount}</div>
+                <p className="text-xs text-muted-foreground mt-1 hidden sm:block">
                   {stats.alertsCount} alertas publicados
                 </p>
               </CardContent>
@@ -584,7 +584,7 @@ const Dashboard = () => {
             <CardHeader>
               <CardTitle>Ações Rápidas</CardTitle>
             </CardHeader>
-            <CardContent className="flex gap-4">
+            <CardContent className="flex flex-col sm:flex-row gap-3 sm:gap-4">
               <Link to="/alerts">
                 <Button variant="hero">
                   <Zap className="mr-2 h-4 w-4" />

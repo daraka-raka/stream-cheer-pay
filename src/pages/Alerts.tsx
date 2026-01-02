@@ -386,14 +386,14 @@ export default function Alerts() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold">Alertas</h1>
-            <p className="text-muted-foreground mt-1">
+            <h1 className="text-2xl sm:text-3xl font-bold">Alertas</h1>
+            <p className="text-muted-foreground mt-1 text-sm sm:text-base">
               Gerencie seus alertas de mídia (máximo 20)
             </p>
           </div>
-          <Button className="gap-2" onClick={() => setIsDialogOpen(true)}>
+          <Button className="gap-2 w-full sm:w-auto" onClick={() => setIsDialogOpen(true)}>
             <Plus className="h-4 w-4" />
             Criar Novo Alerta
           </Button>

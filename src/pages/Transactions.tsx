@@ -253,22 +253,20 @@ export default function Transactions() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex justify-between items-start">
-          <div>
-            <h1 className="text-3xl font-bold">Transações</h1>
-            <p className="text-muted-foreground mt-1">
-              Histórico de vendas e arrecadação
-            </p>
-          </div>
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold">Transações</h1>
+          <p className="text-muted-foreground mt-1 text-sm sm:text-base">
+            Histórico de vendas e arrecadação
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
           {stats.map((stat) => (
-            <Card key={stat.title} className="p-6 border-border shadow-card hover:shadow-glow transition-shadow">
+            <Card key={stat.title} className="p-4 sm:p-6 border-border shadow-card hover:shadow-glow transition-shadow">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">{stat.title}</p>
-                  <p className="text-2xl font-bold mt-1">{stat.value}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">{stat.title}</p>
+                  <p className="text-xl sm:text-2xl font-bold mt-1">{stat.value}</p>
                   <div className="flex items-center gap-1 mt-1">
                     {stat.changeIcon && <stat.changeIcon className={cn("h-3 w-3", stat.changeColor)} />}
                     <p className={cn("text-xs", stat.changeColor || "text-muted-foreground")}>
@@ -276,8 +274,8 @@ export default function Transactions() {
                     </p>
                   </div>
                 </div>
-                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                  <stat.icon className="h-6 w-6 text-primary" />
+                <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <stat.icon className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                 </div>
               </div>
             </Card>
@@ -285,14 +283,15 @@ export default function Transactions() {
         </div>
 
         {/* Filters */}
-        <Card className="border-border shadow-card p-6">
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="flex-1">
-              <Label className="text-sm mb-2">Buscar</Label>
+        <Card className="border-border shadow-card p-4 sm:p-6">
+          <div className="space-y-4">
+            {/* Search - Full width */}
+            <div>
+              <Label className="text-sm mb-2 block">Buscar</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar por nota ou título do alerta..."
+                  placeholder="Buscar por nota ou título..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9"
@@ -300,83 +299,91 @@ export default function Transactions() {
               </div>
             </div>
             
-            <div className="w-full lg:w-48">
-              <Label className="text-sm mb-2">Status</Label>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Todos" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="paid">Pago</SelectItem>
-                  <SelectItem value="pending">Pendente</SelectItem>
-                  <SelectItem value="failed">Falhou</SelectItem>
-                </SelectContent>
-              </Select>
+            {/* Status and Alert filters - Grid on mobile */}
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
+              <div>
+                <Label className="text-sm mb-2 block">Status</Label>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="paid">Pago</SelectItem>
+                    <SelectItem value="pending">Pendente</SelectItem>
+                    <SelectItem value="failed">Falhou</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label className="text-sm mb-2 block">Alerta</Label>
+                <Select value={alertFilter} onValueChange={setAlertFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    {alerts.map((alert) => (
+                      <SelectItem key={alert.id} value={alert.id}>
+                        {alert.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            <div className="w-full lg:w-48">
-              <Label className="text-sm mb-2">Alerta</Label>
-              <Select value={alertFilter} onValueChange={setAlertFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Todos" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  {alerts.map((alert) => (
-                    <SelectItem key={alert.id} value={alert.id}>
-                      {alert.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            {/* Date filters - Grid on mobile */}
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
+              <div>
+                <Label className="text-sm mb-2 block">Data Inicial</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start text-left font-normal text-xs sm:text-sm">
+                      <Calendar className="mr-1 sm:mr-2 h-4 w-4 flex-shrink-0" />
+                      <span className="truncate">{dateFrom ? format(dateFrom, "dd/MM/yy") : "Selecione"}</span>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarComponent
+                      mode="single"
+                      selected={dateFrom}
+                      onSelect={setDateFrom}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div>
+                <Label className="text-sm mb-2 block">Data Final</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start text-left font-normal text-xs sm:text-sm">
+                      <Calendar className="mr-1 sm:mr-2 h-4 w-4 flex-shrink-0" />
+                      <span className="truncate">{dateTo ? format(dateTo, "dd/MM/yy") : "Selecione"}</span>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarComponent
+                      mode="single"
+                      selected={dateTo}
+                      onSelect={setDateTo}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
 
-            <div className="w-full lg:w-48">
-              <Label className="text-sm mb-2">Data Inicial</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start text-left font-normal">
-                    <Calendar className="mr-2 h-4 w-4" />
-                    {dateFrom ? format(dateFrom, "dd/MM/yyyy") : "Selecione"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <CalendarComponent
-                    mode="single"
-                    selected={dateFrom}
-                    onSelect={setDateFrom}
-                    initialFocus
-                    className="pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-
-            <div className="w-full lg:w-48">
-              <Label className="text-sm mb-2">Data Final</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start text-left font-normal">
-                    <Calendar className="mr-2 h-4 w-4" />
-                    {dateTo ? format(dateTo, "dd/MM/yyyy") : "Selecione"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <CalendarComponent
-                    mode="single"
-                    selected={dateTo}
-                    onSelect={setDateTo}
-                    initialFocus
-                    className="pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-
-            <div className="flex items-end gap-2">
+            {/* Action buttons */}
+            <div className="flex flex-col sm:flex-row gap-2 sm:justify-end">
               <Button
                 variant="outline"
+                className="w-full sm:w-auto"
                 onClick={() => {
                   setStatusFilter("all");
                   setAlertFilter("all");
@@ -386,21 +393,25 @@ export default function Transactions() {
                 }}
               >
                 <Filter className="h-4 w-4 mr-2" />
-                Limpar
+                Limpar Filtros
               </Button>
-              <Button onClick={exportToCSV} disabled={filteredTransactions.length === 0}>
+              <Button 
+                onClick={exportToCSV} 
+                disabled={filteredTransactions.length === 0}
+                className="w-full sm:w-auto"
+              >
                 <Download className="h-4 w-4 mr-2" />
-                CSV
+                Exportar CSV
               </Button>
             </div>
           </div>
         </Card>
 
         <Card className="border-border shadow-card">
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">Histórico</h2>
-              <p className="text-sm text-muted-foreground">
+              <h2 className="text-lg sm:text-xl font-semibold">Histórico</h2>
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 {filteredTransactions.length} {filteredTransactions.length === 1 ? "transação" : "transações"}
               </p>
             </div>
@@ -418,7 +429,48 @@ export default function Transactions() {
               </div>
             ) : (
               <>
-                <div className="overflow-x-auto">
+                {/* Mobile: Card view */}
+                <div className="space-y-3 md:hidden">
+                  {paginatedTransactions.map((tx) => (
+                    <div 
+                      key={tx.id} 
+                      className="p-4 rounded-lg border border-border bg-muted/30"
+                    >
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm truncate">
+                            {tx.alerts?.title || "—"}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(tx.created_at).toLocaleDateString("pt-BR")}
+                          </p>
+                        </div>
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs flex-shrink-0 ${
+                            tx.status === "paid"
+                              ? "bg-green-500/10 text-green-500"
+                              : tx.status === "pending"
+                              ? "bg-yellow-500/10 text-yellow-500"
+                              : "bg-red-500/10 text-red-500"
+                          }`}
+                        >
+                          {tx.status === "paid" ? "Pago" : tx.status === "pending" ? "Pendente" : "Falhou"}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="text-xs text-muted-foreground">
+                          <span>Total: R$ {(tx.amount_cents / 100).toFixed(2)}</span>
+                        </div>
+                        <p className="text-base font-bold text-primary">
+                          R$ {(tx.amount_streamer_cents / 100).toFixed(2)}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop: Table view */}
+                <div className="overflow-x-auto hidden md:block">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -473,14 +525,15 @@ export default function Transactions() {
 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                  <div className="flex items-center justify-between mt-4">
-                    <p className="text-sm text-muted-foreground">
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4">
+                    <p className="text-xs sm:text-sm text-muted-foreground order-2 sm:order-1">
                       Página {currentPage} de {totalPages}
                     </p>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 order-1 sm:order-2 w-full sm:w-auto">
                       <Button
                         variant="outline"
                         size="sm"
+                        className="flex-1 sm:flex-initial"
                         onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                         disabled={currentPage === 1}
                       >
@@ -489,6 +542,7 @@ export default function Transactions() {
                       <Button
                         variant="outline"
                         size="sm"
+                        className="flex-1 sm:flex-initial"
                         onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                         disabled={currentPage === totalPages}
                       >

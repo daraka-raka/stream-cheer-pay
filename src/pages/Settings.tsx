@@ -351,14 +351,14 @@ export default function Settings() {
           
           {mpConfig ? (
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
                 <div className="flex items-center gap-3">
-                  <CheckCircle className="h-6 w-6 text-green-500" />
+                  <CheckCircle className="h-6 w-6 text-green-500 flex-shrink-0" />
                   <div>
                     <p className="font-medium text-green-600 dark:text-green-400">
                       Mercado Pago conectado
                     </p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground break-all">
                       ID da conta: {mpConfig.mp_user_id}
                     </p>
                   </div>
@@ -366,6 +366,7 @@ export default function Settings() {
                 <Button 
                   variant="outline" 
                   size="sm"
+                  className="w-full sm:w-auto"
                   onClick={() => {
                     toast.info("Para desconectar, entre em contato com o suporte.");
                   }}
@@ -590,15 +591,15 @@ export default function Settings() {
           <div className="space-y-4">
             <div>
               <Label>Página Pública</Label>
-              <div className="flex gap-2 mt-1">
+              <div className="flex flex-col sm:flex-row gap-2 mt-1">
                 <Input
                   readOnly
                   value={`${window.location.origin}/@${streamer?.handle || "seu_handle"}`}
-                  className="font-mono text-sm"
+                  className="font-mono text-sm flex-1"
                 />
                 <Button
                   variant="outline"
-                  size="icon"
+                  className="w-full sm:w-auto"
                   onClick={() =>
                     copyToClipboard(
                       `${window.location.origin}/@${streamer?.handle}`,
@@ -607,21 +608,22 @@ export default function Settings() {
                   }
                   disabled={!streamer?.handle}
                 >
-                  <Copy className="h-4 w-4" />
+                  <Copy className="h-4 w-4 mr-2 sm:mr-0" />
+                  <span className="sm:hidden">Copiar</span>
                 </Button>
               </div>
             </div>
             <div>
               <Label>Widget URL (para OBS/Streamlabs)</Label>
-              <div className="flex gap-2 mt-1">
+              <div className="flex flex-col sm:flex-row gap-2 mt-1">
                 <Input
                   readOnly
                   value={`${window.location.origin}/overlay.html?key=${streamer?.public_key || "sua-chave"}`}
-                  className="font-mono text-sm"
+                  className="font-mono text-sm flex-1"
                 />
                 <Button
                   variant="outline"
-                  size="icon"
+                  className="w-full sm:w-auto"
                   onClick={() =>
                     copyToClipboard(
                       `${window.location.origin}/overlay.html?key=${streamer?.public_key}`,
@@ -630,7 +632,8 @@ export default function Settings() {
                   }
                   disabled={!streamer?.public_key}
                 >
-                  <Copy className="h-4 w-4" />
+                  <Copy className="h-4 w-4 mr-2 sm:mr-0" />
+                  <span className="sm:hidden">Copiar</span>
                 </Button>
               </div>
               <div className="mt-3 p-3 bg-muted/50 rounded-lg text-sm space-y-2">
@@ -777,25 +780,28 @@ export default function Settings() {
           <div className="space-y-4">
             <div>
               <Label>Tema</Label>
-              <div className="flex gap-2 mt-2">
+              <div className="grid grid-cols-3 gap-2 mt-2">
                 <Button
                   variant={theme === "light" ? "default" : "outline"}
                   onClick={() => setTheme("light")}
-                  className="flex-1"
+                  size="sm"
+                  className="w-full"
                 >
                   Claro
                 </Button>
                 <Button
                   variant={theme === "dark" ? "default" : "outline"}
                   onClick={() => setTheme("dark")}
-                  className="flex-1"
+                  size="sm"
+                  className="w-full"
                 >
                   Escuro
                 </Button>
                 <Button
                   variant={theme === "system" ? "default" : "outline"}
                   onClick={() => setTheme("system")}
-                  className="flex-1"
+                  size="sm"
+                  className="w-full"
                 >
                   Sistema
                 </Button>

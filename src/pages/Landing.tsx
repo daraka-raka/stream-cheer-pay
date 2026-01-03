@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Zap, DollarSign, Play } from "lucide-react";
+import { Zap, DollarSign, Play, Users, Sparkles, MonitorPlay } from "lucide-react";
 
 const Landing = () => {
   return (
@@ -26,26 +26,105 @@ const Landing = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="container mx-auto px-4 py-20 text-center">
-        <div className="max-w-4xl mx-auto space-y-8">
-          <h2 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent animate-fade-in">
-            Monetize suas Lives com Alertas Multimídia
-          </h2>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Crie alertas personalizados com imagem, áudio e vídeo. Seu público compra, você recebe, e os alertas aparecem automaticamente na sua stream.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/auth/signup">
-              <Button size="lg" variant="hero" className="text-lg px-8 py-6">
-                Começar Agora
-                <Zap className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
-            <Link to="/streamers">
-              <Button size="lg" variant="outline" className="text-lg px-8 py-6">
-                Encontrar Streamers
-              </Button>
-            </Link>
+      <section className="container mx-auto px-4 py-16 md:py-24">
+        <div className="grid lg:grid-cols-2 gap-12 items-center max-w-7xl mx-auto">
+          {/* Left Column - Text */}
+          <div className="space-y-8 text-center lg:text-left">
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent animate-fade-in leading-tight">
+              Transforme sua Live em um Espetáculo Interativo
+            </h2>
+            <p className="text-lg md:text-xl text-muted-foreground max-w-xl mx-auto lg:mx-0">
+              Deixe seus seguidores participarem da sua stream com alertas únicos de vídeo e áudio. Monetize sua paixão de forma simples e divertida.
+            </p>
+            
+            {/* CTAs */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+              <Link to="/auth/signup">
+                <Button size="lg" variant="hero" className="text-lg px-8 py-6 w-full sm:w-auto">
+                  Começar Agora (Grátis)
+                  <Zap className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+              <Link to="/streamers">
+                <Button size="lg" variant="outline" className="text-lg px-8 py-6 w-full sm:w-auto">
+                  Ver Alertas de Streamers
+                </Button>
+              </Link>
+            </div>
+
+            {/* Social Proof */}
+            <div className="flex items-center justify-center lg:justify-start gap-2 text-sm text-muted-foreground">
+              <Users className="h-4 w-4 text-primary" />
+              <span>Mais de 500 Streamers já usam Streala para engajar e monetizar.</span>
+            </div>
+          </div>
+
+          {/* Right Column - Product Visual */}
+          <div className="relative order-first lg:order-last">
+            <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-border/50 bg-gradient-to-br from-card to-muted">
+              {/* Mock Dashboard Preview */}
+              <div className="p-4 md:p-6 space-y-4">
+                {/* Mock Header */}
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+                    <Sparkles className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <div className="h-4 w-24 bg-foreground/20 rounded" />
+                    <div className="h-3 w-16 bg-foreground/10 rounded mt-1" />
+                  </div>
+                </div>
+
+                {/* Mock Alert Cards */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-xl bg-background/80 p-3 space-y-2 animate-fade-in" style={{ animationDelay: "0.1s" }}>
+                    <div className="aspect-video rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+                      <Play className="h-8 w-8 text-primary" />
+                    </div>
+                    <div className="h-3 w-full bg-foreground/10 rounded" />
+                    <div className="h-4 w-16 bg-primary/30 rounded text-center text-xs text-primary font-bold flex items-center justify-center">
+                      R$ 5,00
+                    </div>
+                  </div>
+                  <div className="rounded-xl bg-background/80 p-3 space-y-2 animate-fade-in" style={{ animationDelay: "0.2s" }}>
+                    <div className="aspect-video rounded-lg bg-gradient-to-br from-secondary/20 to-accent/20 flex items-center justify-center">
+                      <MonitorPlay className="h-8 w-8 text-secondary" />
+                    </div>
+                    <div className="h-3 w-full bg-foreground/10 rounded" />
+                    <div className="h-4 w-16 bg-secondary/30 rounded text-center text-xs text-secondary font-bold flex items-center justify-center">
+                      R$ 10,00
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mock Alert Playing Indicator */}
+                <div className="rounded-xl bg-gradient-to-r from-primary/10 via-secondary/10 to-accent/10 p-4 border border-primary/20 animate-fade-in" style={{ animationDelay: "0.3s" }}>
+                  <div className="flex items-center gap-3">
+                    <div className="relative">
+                      <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center">
+                        <Zap className="h-6 w-6 text-primary animate-pulse" />
+                      </div>
+                      <div className="absolute -top-1 -right-1 h-4 w-4 bg-green-500 rounded-full border-2 border-background" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">Alerta tocando na stream!</p>
+                      <p className="text-xs text-muted-foreground">Enviado por @viewer123</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Decorative Glow */}
+              <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-secondary/20 to-accent/20 blur-2xl -z-10" />
+            </div>
+
+            {/* Floating Elements */}
+            <div className="absolute -top-4 -right-4 h-20 w-20 bg-gradient-to-br from-primary to-primary-glow rounded-2xl shadow-glow rotate-12 flex items-center justify-center animate-fade-in hidden md:flex" style={{ animationDelay: "0.4s" }}>
+              <DollarSign className="h-10 w-10 text-white" />
+            </div>
+            <div className="absolute -bottom-4 -left-4 h-16 w-16 bg-gradient-to-br from-secondary to-accent rounded-2xl shadow-glow -rotate-12 flex items-center justify-center animate-fade-in hidden md:flex" style={{ animationDelay: "0.5s" }}>
+              <Play className="h-8 w-8 text-white" />
+            </div>
           </div>
         </div>
       </section>

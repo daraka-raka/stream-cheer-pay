@@ -154,9 +154,9 @@ serve(async (req) => {
       );
     }
 
-    if (!amount_cents || typeof amount_cents !== "number" || amount_cents < 100 || amount_cents > 100000000) {
+    if (!amount_cents || typeof amount_cents !== "number" || amount_cents < 100 || amount_cents > 100000) {
       return new Response(
-        JSON.stringify({ error: "Valor inválido" }),
+        JSON.stringify({ error: "Valor inválido. Mínimo R$ 1,00, máximo R$ 1.000,00" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }

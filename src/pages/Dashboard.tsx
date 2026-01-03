@@ -248,8 +248,14 @@ const Dashboard = () => {
           });
         }
         const existing = alertsMap.get(alert.id);
-        existing.sales_count += 1;
-        existing.total_revenue += (alert.transactions as any).amount_streamer_cents;
+        // Handle transactions as array - sum all amounts
+        const txArray = alert.transactions as Array<{ amount_streamer_cents: number }>;
+        if (Array.isArray(txArray)) {
+          txArray.forEach((tx) => {
+            existing.sales_count += 1;
+            existing.total_revenue += tx.amount_streamer_cents || 0;
+          });
+        }
       });
 
       const topAlertsData = Array.from(alertsMap.values())

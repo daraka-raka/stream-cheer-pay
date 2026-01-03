@@ -59,7 +59,10 @@ export const alertSchema = z.object({
     .max(1000, "Descrição deve ter no máximo 1000 caracteres")
     .optional()
     .or(z.literal('')),
-  price_cents: z.number().int().min(100, "Preço mínimo é R$ 1,00")
+  price_cents: z.number()
+    .int()
+    .min(100, "Preço mínimo é R$ 1,00")
+    .max(100000, "Preço máximo é R$ 1.000,00")
 });
 
 // Withdrawal validation

@@ -9,12 +9,23 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Copy, CheckCircle, AlertCircle, Upload, Mail, Pause, Play, CreditCard, Loader2, ExternalLink, TrendingUp } from "lucide-react";
+import { Copy, CheckCircle, AlertCircle, Upload, Mail, Pause, Play, CreditCard, Loader2, ExternalLink, TrendingUp, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { useTheme } from "next-themes";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { profileSchema } from "@/lib/validations";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 // Helper function to generate URL-friendly handle from display name
 const generateHandle = (displayName: string): string => {
@@ -621,20 +632,73 @@ export default function Settings() {
                   value={`${window.location.origin}/overlay.html?key=${streamer?.public_key || "sua-chave"}`}
                   className="font-mono text-sm flex-1"
                 />
-                <Button
-                  variant="outline"
-                  className="w-full sm:w-auto"
-                  onClick={() =>
-                    copyToClipboard(
-                      `${window.location.origin}/overlay.html?key=${streamer?.public_key}`,
-                      "Widget URL"
-                    )
-                  }
-                  disabled={!streamer?.public_key}
-                >
-                  <Copy className="h-4 w-4 mr-2 sm:mr-0" />
-                  <span className="sm:hidden">Copiar</span>
-                </Button>
+                <div className="flex gap-2 w-full sm:w-auto">
+                  <Button
+                    variant="outline"
+                    className="flex-1 sm:flex-none"
+                    onClick={() =>
+                      copyToClipboard(
+                        `${window.location.origin}/overlay.html?key=${streamer?.public_key}`,
+                        "Widget URL"
+                      )
+                    }
+                    disabled={!streamer?.public_key}
+                  >
+                    <Copy className="h-4 w-4 mr-2 sm:mr-0" />
+                    <span className="sm:hidden">Copiar</span>
+                  </Button>
+                  <AlertDialog>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50"
+                      asChild
+                    >
+                      <AlertDialogTrigger>
+                        <RefreshCw className="h-4 w-4" />
+                      </AlertDialogTrigger>
+                    </Button>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Gerar Nova Chave?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          <span className="block mb-2">
+                            Isso irá invalidar sua URL atual do widget. Você precisará atualizar o link no OBS/Streamlabs.
+                          </span>
+                          <span className="block text-yellow-600 font-medium">
+                            ⚠️ Alertas não funcionarão até você atualizar a URL no OBS.
+                          </span>
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={async () => {
+                            if (!streamer) return;
+                            try {
+                              const newKey = crypto.randomUUID();
+                              const { error } = await supabase
+                                .from("streamers")
+                                .update({ public_key: newKey })
+                                .eq("id", streamer.id);
+                              
+                              if (error) throw error;
+                              
+                              toast.success("Nova chave gerada! Atualize a URL no OBS.");
+                              await loadStreamerData();
+                            } catch (error) {
+                              console.error("Error generating new key:", error);
+                              toast.error("Erro ao gerar nova chave");
+                            }
+                          }}
+                          className="bg-yellow-600 hover:bg-yellow-700"
+                        >
+                          Gerar Nova Chave
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               </div>
               <div className="mt-3 p-3 bg-muted/50 rounded-lg text-sm space-y-2">
                 <p className="font-medium">📺 Como configurar no OBS:</p>

@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Zap, DollarSign, Play, Users, Sparkles, MonitorPlay } from "lucide-react";
+import { Zap, DollarSign, Play, Users, Sparkles, MonitorPlay, Shield, ListOrdered, Percent } from "lucide-react";
 
 const Landing = () => {
   return (
@@ -45,7 +45,7 @@ const Landing = () => {
                   <Zap className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-              <Link to="/streamers">
+              <Link to="/explore">
                 <Button size="lg" variant="outline" className="text-lg px-8 py-6 w-full sm:w-auto">
                   Ver Alertas de Streamers
                 </Button>
@@ -137,9 +137,9 @@ const Landing = () => {
             <div className="h-16 w-16 rounded-xl bg-gradient-to-br from-primary to-primary-glow flex items-center justify-center mb-6 shadow-glow">
               <Play className="h-8 w-8 text-white" />
             </div>
-            <h4 className="text-xl font-bold mb-4">1. Crie seus Alertas</h4>
+            <h4 className="text-xl font-bold mb-4">1. Crie a Interação</h4>
             <p className="text-muted-foreground">
-              Faça upload de até 20 alertas com imagem, áudio ou vídeo. Defina título, descrição e preço em reais.
+              Faça o upload de vídeos, imagens e áudios que farão sua live explodir. Defina o título, a descrição e o preço em Reais.
             </p>
           </div>
 
@@ -147,9 +147,9 @@ const Landing = () => {
             <div className="h-16 w-16 rounded-xl bg-gradient-to-br from-secondary to-accent flex items-center justify-center mb-6 shadow-glow">
               <DollarSign className="h-8 w-8 text-white" />
             </div>
-            <h4 className="text-xl font-bold mb-4">2. Público Compra</h4>
+            <h4 className="text-xl font-bold mb-4">2. Público Engajado</h4>
             <p className="text-muted-foreground">
-              Espectadores acessam sua página pública, escolhem um alerta e pagam via QR Code (Pix ou Cartão).
+              Seus espectadores acessam sua página pública, escolhem o alerta e pagam instantaneamente via Pix ou Cartão.
             </p>
           </div>
 
@@ -157,9 +157,45 @@ const Landing = () => {
             <div className="h-16 w-16 rounded-xl bg-gradient-to-br from-accent to-primary flex items-center justify-center mb-6 shadow-glow">
               <Zap className="h-8 w-8 text-white" />
             </div>
-            <h4 className="text-xl font-bold mb-4">3. Alertas Aparecem</h4>
+            <h4 className="text-xl font-bold mb-4">3. Reação Imediata</h4>
             <p className="text-muted-foreground">
-              Após o pagamento, o alerta entra na fila e é exibido automaticamente no seu OBS/stream.
+              Após a confirmação do pagamento, o alerta entra na fila e é exibido automaticamente no seu OBS/Stream. Engajamento garantido!
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Trust Section */}
+      <section className="container mx-auto px-4 py-20">
+        <h3 className="text-4xl font-bold text-center mb-16">Por Que Streamers de Sucesso Escolhem o Streala?</h3>
+        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div className="p-8 rounded-2xl bg-card border border-border hover:shadow-glow transition-all duration-300">
+            <div className="h-16 w-16 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center mb-6 shadow-glow">
+              <Shield className="h-8 w-8 text-white" />
+            </div>
+            <h4 className="text-xl font-bold mb-4">Pagamento Seguro e Instantâneo</h4>
+            <p className="text-muted-foreground">
+              Receba seus valores diretamente na sua conta do Mercado Pago. Sem intermediários, sem atrasos.
+            </p>
+          </div>
+
+          <div className="p-8 rounded-2xl bg-card border border-border hover:shadow-glow transition-all duration-300">
+            <div className="h-16 w-16 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center mb-6 shadow-glow">
+              <ListOrdered className="h-8 w-8 text-white" />
+            </div>
+            <h4 className="text-xl font-bold mb-4">Moderação e Fila de Alertas</h4>
+            <p className="text-muted-foreground">
+              Gerencie a ordem de exibição e modere o conteúdo para manter sua live sempre profissional.
+            </p>
+          </div>
+
+          <div className="p-8 rounded-2xl bg-card border border-border hover:shadow-glow transition-all duration-300">
+            <div className="h-16 w-16 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center mb-6 shadow-glow">
+              <Percent className="h-8 w-8 text-white" />
+            </div>
+            <h4 className="text-xl font-bold mb-4">A Menor Taxa do Mercado</h4>
+            <p className="text-muted-foreground">
+              Nossas taxas de comissão são as mais baixas, garantindo que a maior parte do seu esforço vá para o seu bolso.
             </p>
           </div>
         </div>
@@ -168,13 +204,13 @@ const Landing = () => {
       {/* CTA Final */}
       <section className="container mx-auto px-4 py-20">
         <div className="max-w-4xl mx-auto text-center p-12 rounded-3xl bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 border border-primary/20">
-          <h3 className="text-4xl font-bold mb-6">Pronto para Começar?</h3>
+          <h3 className="text-4xl font-bold mb-6">Pronto para Levar sua Live ao Próximo Nível?</h3>
           <p className="text-xl text-muted-foreground mb-8">
-            Crie sua conta gratuitamente e comece a monetizar suas lives hoje mesmo.
+            Crie sua conta gratuitamente e comece a monetizar e engajar seus seguidores hoje mesmo.
           </p>
           <Link to="/auth/signup">
             <Button size="lg" variant="hero" className="text-lg px-12 py-6">
-              Criar Conta de Streamer
+              Criar Minha Conta de Streamer
               <Zap className="ml-2 h-5 w-5" />
             </Button>
           </Link>

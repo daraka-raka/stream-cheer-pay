@@ -539,6 +539,20 @@ export type Database = {
       }
     }
     Functions: {
+      get_public_streamer_profile: {
+        Args: { p_handle: string }
+        Returns: {
+          accepting_alerts: boolean
+          bio: string
+          created_at: string
+          display_name: string
+          handle: string
+          id: string
+          photo_url: string
+          public_key: string
+          updated_at: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

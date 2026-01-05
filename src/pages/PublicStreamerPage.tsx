@@ -171,10 +171,8 @@ const PublicStreamerPage = () => {
     queryKey: ["public-streamer", cleanHandle],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("public_streamer_profiles")
-        .select("*")
-        .eq("handle", cleanHandle)
-        .maybeSingle();
+        .rpc("get_public_streamer_profile", { p_handle: cleanHandle })
+        .single();
 
       if (error) throw error;
       if (!data) throw new Error("Streamer não encontrado");

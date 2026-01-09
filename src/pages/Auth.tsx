@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Zap } from "lucide-react";
+import { Zap, Eye, EyeOff, Check, X } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Auth = () => {
@@ -15,6 +15,7 @@ const Auth = () => {
   const [signUpData, setSignUpData] = useState({
     email: "",
     password: "",
+    confirmPassword: "",
     displayName: "",
   });
 
@@ -23,8 +24,24 @@ const Auth = () => {
     password: "",
   });
 
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Password requirements validation
+  const passwordRequirements = [
+    { label: "Mínimo 8 caracteres", test: (p: string) => p.length >= 8 },
+    { label: "Letra maiúscula", test: (p: string) => /[A-Z]/.test(p) },
+    { label: "Letra minúscula", test: (p: string) => /[a-z]/.test(p) },
+    { label: "Número", test: (p: string) => /[0-9]/.test(p) },
+    { label: "Caractere especial (!@#$%)", test: (p: string) => /[!@#$%^&*(),.?":{}|<>]/.test(p) },
+  ];
+
+  const isPasswordValid = passwordRequirements.every(req => req.test(signUpData.password));
+  const passwordsMatch = signUpData.password === signUpData.confirmPassword && signUpData.confirmPassword !== "";
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isPasswordValid || !passwordsMatch) return;
     setLoading(true);
     await signUp(signUpData.email, signUpData.password, signUpData.displayName);
     setLoading(false);
@@ -150,17 +167,90 @@ const Auth = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-password">Senha</Label>
-                  <Input
-                    id="signup-password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={signUpData.password}
-                    onChange={(e) => setSignUpData({ ...signUpData, password: e.target.value })}
-                    required
-                    minLength={6}
-                  />
+                  <div className="relative">
+                    <Input
+                      id="signup-password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={signUpData.password}
+                      onChange={(e) => setSignUpData({ ...signUpData, password: e.target.value })}
+                      required
+                      className="pr-10"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
+                    </Button>
+                  </div>
+                  
+                  {/* Password requirements list */}
+                  {signUpData.password.length > 0 && (
+                    <div className="space-y-1.5 mt-3 p-3 rounded-lg bg-muted/50 border border-border">
+                      <p className="text-xs font-medium text-muted-foreground mb-2">Requisitos da senha:</p>
+                      {passwordRequirements.map((req, index) => {
+                        const passed = req.test(signUpData.password);
+                        return (
+                          <div key={index} className="flex items-center gap-2 text-xs">
+                            {passed ? (
+                              <Check className="h-3.5 w-3.5 text-green-500" />
+                            ) : (
+                              <X className="h-3.5 w-3.5 text-muted-foreground" />
+                            )}
+                            <span className={passed ? "text-green-500" : "text-muted-foreground"}>
+                              {req.label}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
-                <Button type="submit" className="w-full" disabled={loading} variant="hero">
+                
+                <div className="space-y-2">
+                  <Label htmlFor="signup-confirm-password">Confirmar Senha</Label>
+                  <div className="relative">
+                    <Input
+                      id="signup-confirm-password"
+                      type={showConfirmPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={signUpData.confirmPassword}
+                      onChange={(e) => setSignUpData({ ...signUpData, confirmPassword: e.target.value })}
+                      required
+                      className="pr-10"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
+                    </Button>
+                  </div>
+                  {signUpData.confirmPassword && !passwordsMatch && (
+                    <p className="text-xs text-destructive flex items-center gap-1">
+                      <X className="h-3 w-3" /> As senhas não coincidem
+                    </p>
+                  )}
+                  {passwordsMatch && (
+                    <p className="text-xs text-green-500 flex items-center gap-1">
+                      <Check className="h-3 w-3" /> Senhas coincidem
+                    </p>
+                  )}
+                </div>
+
+                <Button 
+                  type="submit" 
+                  className="w-full" 
+                  disabled={loading || !isPasswordValid || !passwordsMatch} 
+                  variant="hero"
+                >
                   {loading ? "Criando..." : "Criar Conta"}
                 </Button>
               </form>

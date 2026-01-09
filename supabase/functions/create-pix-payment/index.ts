@@ -58,20 +58,6 @@ function isRateLimited(ip: string): boolean {
   return false;
 }
 
-// Tiered commission rates based on transaction amount in BRL
-function getCommissionRate(amountCents: number): number {
-  const amountBRL = amountCents / 100;
-  
-  if (amountBRL <= 500) {
-    return 0.05; // 5%
-  } else if (amountBRL <= 1000) {
-    return 0.04; // 4%
-  } else if (amountBRL <= 5000) {
-    return 0.03; // 3%
-  } else {
-    return 0.025; // 2.5%
-  }
-}
 
 serve(async (req) => {
   const origin = req.headers.get("origin");
@@ -219,19 +205,16 @@ serve(async (req) => {
     // Get the base URL for webhook
     const webhookUrl = `${supabaseUrl}/functions/v1/mercadopago-webhook`;
 
-    // Calculate commission using tiered rates (only if using streamer's token)
-    const commissionRate = useStreamerToken ? getCommissionRate(amount_cents) : 0;
     const transactionAmountReais = amount_cents / 100;
-    const applicationFee = Math.round(transactionAmountReais * commissionRate * 100) / 100;
     
-    console.log("[create-pix-payment] Tiered commission:", {
+    // NOTE: application_fee requires marketplace OAuth setup with Mercado Pago
+    // Since streamers connect directly, we handle commission on withdrawals instead
+    console.log("[create-pix-payment] Payment amount:", {
       amount_brl: transactionAmountReais,
-      rate: `${commissionRate * 100}%`,
-      fee: applicationFee,
       using_streamer_token: useStreamerToken
     });
 
-    // Create PIX payment payload
+    // Create PIX payment payload (no application_fee - commission handled on withdrawal)
     const paymentPayload: Record<string, unknown> = {
       transaction_amount: transactionAmountReais,
       description: `Alerta: ${alert_title} - @${streamer_handle}`,
@@ -242,12 +225,6 @@ serve(async (req) => {
       external_reference: transaction_id,
       notification_url: webhookUrl,
     };
-
-    // Add application_fee only if using streamer's token (marketplace split)
-    if (useStreamerToken && applicationFee > 0) {
-      paymentPayload.application_fee = applicationFee;
-      console.log("[create-pix-payment] Application fee (commission):", applicationFee);
-    }
 
     console.log("[create-pix-payment] Creating PIX payment:", JSON.stringify(paymentPayload));
 
@@ -291,7 +268,6 @@ serve(async (req) => {
     console.log("[create-pix-payment] PIX payment created successfully:", {
       payment_id: result.payment_id,
       expires_at: result.expires_at,
-      commission_applied: applicationFee,
     });
 
     return new Response(JSON.stringify(result), {

@@ -9,7 +9,7 @@ export const pixPaymentSchema = z.object({
   amount_cents: z.number()
     .int("Valor deve ser inteiro")
     .min(100, "Valor mínimo é R$ 1,00")
-    .max(100000000, "Valor máximo é R$ 1.000.000,00"),
+    .max(100000, "Valor máximo é R$ 1.000,00"),
   streamer_id: z.string().uuid("ID do streamer inválido"),
   streamer_handle: z.string()
     .min(1, "Handle é obrigatório")

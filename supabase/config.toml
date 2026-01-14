@@ -19,3 +19,6 @@ verify_jwt = false
 
 [functions.refresh-mp-token]
 verify_jwt = false
+
+[functions.manage-alert-queue]
+verify_jwt = false

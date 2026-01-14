@@ -132,11 +132,17 @@ const WidgetOverlay = () => {
         await new Promise(resolve => setTimeout(resolve, alertStartDelay * 1000));
       }
 
-      // Update status to playing
-      await supabase
-        .from("alert_queue")
-        .update({ status: "playing", started_at: new Date().toISOString() })
-        .eq("id", nextItem.id);
+      // Update status to playing via edge function
+      if (publicKey) {
+        await supabase.functions.invoke("manage-alert-queue", {
+          body: {
+            action: "update_status",
+            queue_id: nextItem.id,
+            status: "playing",
+            public_key: publicKey,
+          },
+        });
+      }
 
       // Load alert details
       const { data: alert } = await supabase
@@ -165,11 +171,17 @@ const WidgetOverlay = () => {
 
     console.log("[Widget] Alert completed:", currentAlert.queueId);
 
-    // Update status to finished
-    await supabase
-      .from("alert_queue")
-      .update({ status: "finished", finished_at: new Date().toISOString() })
-      .eq("id", currentAlert.queueId);
+    // Update status to finished via edge function
+    if (publicKey) {
+      await supabase.functions.invoke("manage-alert-queue", {
+        body: {
+          action: "update_status",
+          queue_id: currentAlert.queueId,
+          status: "finished",
+          public_key: publicKey,
+        },
+      });
+    }
 
     // Delay between alerts before clearing current
     if (alertBetweenDelay > 0) {

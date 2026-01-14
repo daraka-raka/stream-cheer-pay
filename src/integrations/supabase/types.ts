@@ -197,6 +197,7 @@ export type Database = {
           alert_start_delay_seconds: number | null
           email_notifications: boolean | null
           milestone_amount_cents: number | null
+          notification_retention_days: number | null
           notify_on_milestone: boolean | null
           overlay_image_duration_seconds: number | null
           show_pendentes: boolean | null
@@ -214,6 +215,7 @@ export type Database = {
           alert_start_delay_seconds?: number | null
           email_notifications?: boolean | null
           milestone_amount_cents?: number | null
+          notification_retention_days?: number | null
           notify_on_milestone?: boolean | null
           overlay_image_duration_seconds?: number | null
           show_pendentes?: boolean | null
@@ -231,6 +233,7 @@ export type Database = {
           alert_start_delay_seconds?: number | null
           email_notifications?: boolean | null
           milestone_amount_cents?: number | null
+          notification_retention_days?: number | null
           notify_on_milestone?: boolean | null
           overlay_image_duration_seconds?: number | null
           show_pendentes?: boolean | null

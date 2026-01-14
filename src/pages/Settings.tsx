@@ -87,6 +87,9 @@ export default function Settings() {
   const [showTicketMedio, setShowTicketMedio] = useState(false);
   const [showTaxaConversao, setShowTaxaConversao] = useState(false);
   const [showPendentes, setShowPendentes] = useState(false);
+  
+  // Notification retention
+  const [notificationRetention, setNotificationRetention] = useState<number | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -129,6 +132,7 @@ export default function Settings() {
       setShowTicketMedio(settings.show_ticket_medio ?? false);
       setShowTaxaConversao(settings.show_taxa_conversao ?? false);
       setShowPendentes(settings.show_pendentes ?? false);
+      setNotificationRetention(settings.notification_retention_days ?? null);
     }
   }, [settings]);
 
@@ -328,6 +332,7 @@ export default function Settings() {
           show_ticket_medio: showTicketMedio,
           show_taxa_conversao: showTaxaConversao,
           show_pendentes: showPendentes,
+          notification_retention_days: notificationRetention,
         });
 
       if (error) throw error;
@@ -792,6 +797,28 @@ export default function Settings() {
                 </p>
               </div>
             )}
+            
+            {/* Notification Retention */}
+            <div className="pt-4 border-t">
+              <Label>Limpar notificações automaticamente</Label>
+              <Select 
+                value={notificationRetention?.toString() || "never"} 
+                onValueChange={(v) => setNotificationRetention(v === "never" ? null : parseInt(v))}
+              >
+                <SelectTrigger className="mt-2 max-w-[250px]">
+                  <SelectValue placeholder="Selecione..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="never">Nunca</SelectItem>
+                  <SelectItem value="1">Após 1 dia</SelectItem>
+                  <SelectItem value="7">Após 7 dias</SelectItem>
+                  <SelectItem value="30">Após 30 dias</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-2">
+                Notificações mais antigas que o período selecionado serão removidas automaticamente.
+              </p>
+            </div>
           </div>
         </Card>
 

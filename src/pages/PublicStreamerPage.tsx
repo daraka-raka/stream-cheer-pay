@@ -542,13 +542,28 @@ const PublicStreamerPage = () => {
                   style={{ animationDelay: `${index * 50}ms` }}
                   onClick={() => !isDisabled && handleAlertClick(alert)}
                 >
-                  <CardHeader className="p-0">
+                <CardHeader className="p-0">
                     <div className="aspect-video relative overflow-hidden">
-                      <img
-                        src={thumbUrl}
-                        alt={alert.title}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                      />
+                      {alert.media_type === "video" && !alert.thumb_path ? (
+                        <>
+                          <video
+                            src={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/alerts/${alert.media_path}`}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                            preload="metadata"
+                            muted
+                            playsInline
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                            <Video className="h-10 w-10 text-white drop-shadow-lg" />
+                          </div>
+                        </>
+                      ) : (
+                        <img
+                          src={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/alerts/${thumbUrl}`}
+                          alt={alert.title}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        />
+                      )}
                       <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                       <Badge className="absolute top-3 right-3 shadow-lg">
                         {getMediaIcon(alert.media_type)}

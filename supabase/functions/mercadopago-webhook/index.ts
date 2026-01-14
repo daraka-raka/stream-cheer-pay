@@ -12,10 +12,11 @@ const corsHeaders = {
 async function validateSignature(req: Request, body: string): Promise<boolean> {
   const webhookSecret = Deno.env.get("MP_WEBHOOK_SECRET");
   
-  // If no secret configured, log warning but allow (for backwards compatibility during transition)
+  // SECURITY: Reject all webhooks if secret is not configured
+  // This prevents attackers from forging webhook calls to mark transactions as paid
   if (!webhookSecret) {
-    console.warn("[mercadopago-webhook] MP_WEBHOOK_SECRET not configured - signature validation skipped");
-    return true;
+    console.error("[mercadopago-webhook] SECURITY: MP_WEBHOOK_SECRET not configured - rejecting webhook");
+    return false;
   }
 
   const xSignature = req.headers.get("x-signature");

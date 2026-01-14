@@ -537,6 +537,48 @@ export type Database = {
           },
         ]
       }
+      streamer_mp_status: {
+        Row: {
+          created_at: string | null
+          is_connected: boolean | null
+          mp_user_id: string | null
+          streamer_id: string | null
+          token_expires_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          is_connected?: never
+          mp_user_id?: string | null
+          streamer_id?: string | null
+          token_expires_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          is_connected?: never
+          mp_user_id?: string | null
+          streamer_id?: string | null
+          token_expires_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "streamer_mp_config_streamer_id_fkey"
+            columns: ["streamer_id"]
+            isOneToOne: true
+            referencedRelation: "public_streamer_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "streamer_mp_config_streamer_id_fkey"
+            columns: ["streamer_id"]
+            isOneToOne: true
+            referencedRelation: "streamers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       get_public_streamer_profile: {

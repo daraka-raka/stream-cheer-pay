@@ -134,14 +134,20 @@ export default function Settings() {
 
   const loadMpConfig = async (streamerId: string) => {
     try {
+      // Use the secure status view that doesn't expose tokens
       const { data, error } = await supabase
-        .from("streamer_mp_config")
-        .select("mp_user_id, commission_rate, created_at")
+        .from("streamer_mp_status")
+        .select("mp_user_id, is_connected, created_at")
         .eq("streamer_id", streamerId)
         .maybeSingle();
 
       if (!error && data) {
-        setMpConfig(data);
+        // Map the view data to the expected format
+        setMpConfig({
+          mp_user_id: data.mp_user_id,
+          commission_rate: null, // Commission rate is not exposed in the view
+          created_at: data.created_at
+        });
       }
     } catch (error) {
       console.error("Error loading MP config:", error);

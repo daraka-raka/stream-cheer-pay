@@ -134,19 +134,17 @@ export default function Settings() {
 
   const loadMpConfig = async (streamerId: string) => {
     try {
-      // Use the secure status view that doesn't expose tokens
+      // Use the secure function that doesn't expose tokens
       const { data, error } = await supabase
-        .from("streamer_mp_status")
-        .select("mp_user_id, is_connected, created_at")
-        .eq("streamer_id", streamerId)
-        .maybeSingle();
+        .rpc("get_mp_connection_status", { p_streamer_id: streamerId });
 
-      if (!error && data) {
-        // Map the view data to the expected format
+      if (!error && data && data.length > 0) {
+        const config = data[0];
+        // Map the function result to the expected format
         setMpConfig({
-          mp_user_id: data.mp_user_id,
-          commission_rate: null, // Commission rate is not exposed in the view
-          created_at: data.created_at
+          mp_user_id: config.mp_user_id,
+          commission_rate: null, // Commission rate is not exposed in the function
+          created_at: config.created_at
         });
       }
     } catch (error) {

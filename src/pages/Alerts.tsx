@@ -136,18 +136,24 @@ export default function Alerts() {
     if (!streamerId) return;
 
     try {
-      const { error } = await supabase.from("alert_queue").insert({
-        streamer_id: streamerId,
-        alert_id: alertId,
-        transaction_id: null,
-        is_test: true,
-        status: "queued",
-        payload: {
-          buyer_note: "🧪 Alerta de teste",
+      const { data, error } = await supabase.functions.invoke("manage-alert-queue", {
+        body: {
+          action: "create_test",
+          alert_id: alertId,
         },
       });
 
       if (error) throw error;
+      
+      if (data?.error) {
+        if (data.error.includes("Rate limit")) {
+          toast.error("Limite de testes atingido. Máximo 10 por hora.");
+        } else {
+          toast.error(data.error);
+        }
+        return;
+      }
+      
       toast.success("Alerta de teste enviado! Verifique o widget no OBS.");
     } catch (error) {
       console.error("Error sending test alert:", error);

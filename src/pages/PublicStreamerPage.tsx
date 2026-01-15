@@ -547,7 +547,7 @@ const PublicStreamerPage = () => {
                       {alert.media_type === "video" && !alert.thumb_path ? (
                         <>
                           <video
-                            src={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/alerts/${alert.media_path}`}
+                            src={alert.media_path}
                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                             preload="metadata"
                             muted
@@ -559,7 +559,7 @@ const PublicStreamerPage = () => {
                         </>
                       ) : (
                         <img
-                          src={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/alerts/${thumbUrl}`}
+                          src={alert.thumb_path || alert.media_path}
                           alt={alert.title}
                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                         />

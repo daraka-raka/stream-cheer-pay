@@ -4,7 +4,7 @@ import { useLocation } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Edit, Play, Trash2, Copy, Eye } from "lucide-react";
+import { Plus, Edit, Play, Trash2, Copy, Eye, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { alertSchema } from "@/lib/validations";
@@ -43,6 +43,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ImageCropper } from "@/components/ImageCropper";
 
 export default function Alerts() {
   const { user } = useAuth();
@@ -66,6 +67,14 @@ export default function Alerts() {
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const highlightedRef = useRef<HTMLDivElement>(null);
+  
+  // Image cropper states
+  const [showCropper, setShowCropper] = useState(false);
+  const [cropperImageSrc, setCropperImageSrc] = useState<string | null>(null);
+  const [cropperType, setCropperType] = useState<'media' | 'cover' | 'thumbnail'>('media');
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+  const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
+  const [thumbnailPreviewUrl, setThumbnailPreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -104,6 +113,59 @@ export default function Alerts() {
       setVideoPreviewUrl(null);
     }
   }, [mediaFile, formData.mediaType]);
+
+  // Cleanup preview URLs
+  useEffect(() => {
+    return () => {
+      if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
+      if (coverPreviewUrl) URL.revokeObjectURL(coverPreviewUrl);
+      if (thumbnailPreviewUrl) URL.revokeObjectURL(thumbnailPreviewUrl);
+    };
+  }, []);
+
+  // Handle image selection for cropper
+  const handleImageSelect = (file: File, type: 'media' | 'cover' | 'thumbnail') => {
+    if (!file.type.startsWith('image/')) {
+      // If not an image (audio/video), set directly
+      if (type === 'media') setMediaFile(file);
+      return;
+    }
+    
+    const url = URL.createObjectURL(file);
+    setCropperImageSrc(url);
+    setCropperType(type);
+    setShowCropper(true);
+  };
+
+  // Handle crop completion
+  const handleCropComplete = (croppedBlob: Blob) => {
+    const file = new File([croppedBlob], `cropped_${Date.now()}.jpg`, { type: 'image/jpeg' });
+    const previewUrl = URL.createObjectURL(croppedBlob);
+    
+    if (cropperType === 'media') {
+      setMediaFile(file);
+      if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
+      setImagePreviewUrl(previewUrl);
+    } else if (cropperType === 'cover') {
+      setCoverImage(file);
+      if (coverPreviewUrl) URL.revokeObjectURL(coverPreviewUrl);
+      setCoverPreviewUrl(previewUrl);
+    } else {
+      setThumbnailFile(file);
+      if (thumbnailPreviewUrl) URL.revokeObjectURL(thumbnailPreviewUrl);
+      setThumbnailPreviewUrl(previewUrl);
+    }
+    
+    setShowCropper(false);
+    if (cropperImageSrc) URL.revokeObjectURL(cropperImageSrc);
+    setCropperImageSrc(null);
+  };
+
+  const handleCropCancel = () => {
+    setShowCropper(false);
+    if (cropperImageSrc) URL.revokeObjectURL(cropperImageSrc);
+    setCropperImageSrc(null);
+  };
 
   const loadStreamerAndAlerts = async () => {
     try {
@@ -525,6 +587,13 @@ export default function Alerts() {
               setMediaFile(null);
               setCoverImage(null);
               setThumbnailFile(null);
+              // Clear preview URLs
+              if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
+              if (coverPreviewUrl) URL.revokeObjectURL(coverPreviewUrl);
+              if (thumbnailPreviewUrl) URL.revokeObjectURL(thumbnailPreviewUrl);
+              setImagePreviewUrl(null);
+              setCoverPreviewUrl(null);
+              setThumbnailPreviewUrl(null);
             }
           }}
         >
@@ -596,29 +665,83 @@ export default function Alerts() {
                 </Select>
               </div>
               {formData.mediaType === "audio" && (
-                <div>
+                <div className="space-y-2">
                   <Label htmlFor="cover">Imagem de Capa * (máx. 5MB)</Label>
-                  <Input
-                    id="cover"
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => setCoverImage(e.target.files?.[0] || null)}
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
+                  {coverPreviewUrl ? (
+                    <div className="relative">
+                      <img 
+                        src={coverPreviewUrl} 
+                        alt="Preview da capa"
+                        className="w-full h-32 object-cover rounded border"
+                      />
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        className="absolute top-2 right-2"
+                        onClick={() => {
+                          setCoverImage(null);
+                          if (coverPreviewUrl) URL.revokeObjectURL(coverPreviewUrl);
+                          setCoverPreviewUrl(null);
+                        }}
+                      >
+                        <X className="h-3 w-3 mr-1" />
+                        Trocar
+                      </Button>
+                    </div>
+                  ) : (
+                    <Input
+                      id="cover"
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleImageSelect(file, 'cover');
+                      }}
+                    />
+                  )}
+                  <p className="text-xs text-muted-foreground">
                     Obrigatório para alertas de áudio
                   </p>
                 </div>
               )}
               {formData.mediaType === "video" && (
-                <div>
+                <div className="space-y-2">
                   <Label htmlFor="thumbnail">Thumbnail do Vídeo (opcional, máx. 5MB)</Label>
-                  <Input
-                    id="thumbnail"
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => setThumbnailFile(e.target.files?.[0] || null)}
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
+                  {thumbnailPreviewUrl ? (
+                    <div className="relative">
+                      <img 
+                        src={thumbnailPreviewUrl} 
+                        alt="Preview da thumbnail"
+                        className="w-full h-32 object-cover rounded border"
+                      />
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        className="absolute top-2 right-2"
+                        onClick={() => {
+                          setThumbnailFile(null);
+                          if (thumbnailPreviewUrl) URL.revokeObjectURL(thumbnailPreviewUrl);
+                          setThumbnailPreviewUrl(null);
+                        }}
+                      >
+                        <X className="h-3 w-3 mr-1" />
+                        Trocar
+                      </Button>
+                    </div>
+                  ) : (
+                    <Input
+                      id="thumbnail"
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleImageSelect(file, 'thumbnail');
+                      }}
+                    />
+                  )}
+                  <p className="text-xs text-muted-foreground">
                     Imagem que aparecerá na galeria antes do vídeo ser reproduzido
                   </p>
                 </div>
@@ -638,22 +761,62 @@ export default function Alerts() {
                   </p>
                 </div>
               )}
-              <div>
+              {/* Image Preview */}
+              {formData.mediaType === "image" && imagePreviewUrl && (
+                <div className="relative">
+                  <img 
+                    src={imagePreviewUrl} 
+                    alt="Preview da imagem"
+                    className="w-full h-32 object-cover rounded border"
+                  />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="absolute top-2 right-2"
+                    onClick={() => {
+                      setMediaFile(null);
+                      if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
+                      setImagePreviewUrl(null);
+                    }}
+                  >
+                    <X className="h-3 w-3 mr-1" />
+                    Trocar
+                  </Button>
+                </div>
+              )}
+              <div className="space-y-2">
                 <Label htmlFor="media">
                   {editingAlert ? "Novo Arquivo (opcional)" : "Arquivo de Mídia *"}{" "}
                   (máx. 50MB)
                 </Label>
-                <Input
-                  id="media"
-                  type="file"
-                  accept={
-                    formData.mediaType === "image" ? "image/*" :
-                    formData.mediaType === "audio" ? "audio/*" :
-                    formData.mediaType === "video" ? "video/*" :
-                    "image/*,audio/*,video/*"
-                  }
-                  onChange={(e) => setMediaFile(e.target.files?.[0] || null)}
-                />
+                {formData.mediaType === "image" && !imagePreviewUrl && (
+                  <Input
+                    id="media"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleImageSelect(file, 'media');
+                    }}
+                  />
+                )}
+                {formData.mediaType === "audio" && (
+                  <Input
+                    id="media"
+                    type="file"
+                    accept="audio/*"
+                    onChange={(e) => setMediaFile(e.target.files?.[0] || null)}
+                  />
+                )}
+                {formData.mediaType === "video" && (
+                  <Input
+                    id="media"
+                    type="file"
+                    accept="video/*"
+                    onChange={(e) => setMediaFile(e.target.files?.[0] || null)}
+                  />
+                )}
               </div>
             </div>
             <DialogFooter>
@@ -777,6 +940,26 @@ export default function Alerts() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Image Cropper Dialog */}
+        <Dialog open={showCropper} onOpenChange={(open) => !open && handleCropCancel()}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Ajustar Imagem</DialogTitle>
+              <DialogDescription>
+                Arraste para reposicionar e use o zoom para ajustar o enquadramento da imagem
+              </DialogDescription>
+            </DialogHeader>
+            {cropperImageSrc && (
+              <ImageCropper
+                imageSrc={cropperImageSrc}
+                aspectRatio={16 / 9}
+                onCropComplete={handleCropComplete}
+                onCancel={handleCropCancel}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   );

@@ -545,18 +545,13 @@ const PublicStreamerPage = () => {
                 <CardHeader className="p-0">
                     <div className="aspect-video relative overflow-hidden">
                       {alert.media_type === "video" && !alert.thumb_path ? (
-                        <>
-                          <video
-                            src={alert.media_path}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                            preload="metadata"
-                            muted
-                            playsInline
-                          />
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                            <Video className="h-10 w-10 text-white drop-shadow-lg" />
-                          </div>
-                        </>
+                        <video
+                          src={alert.media_path}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                          preload="metadata"
+                          muted
+                          playsInline
+                        />
                       ) : (
                         <img
                           src={alert.thumb_path || alert.media_path}

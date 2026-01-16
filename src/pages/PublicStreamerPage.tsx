@@ -438,79 +438,66 @@ const PublicStreamerPage = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Premium Header */}
+      {/* Header com Streamer Info */}
       <header className="border-b bg-gradient-to-r from-primary/5 via-background to-secondary/5 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-center">
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+          {/* Streamer Info - Esquerda */}
+          <div className="flex items-center gap-3">
+            <Avatar className="h-10 w-10 ring-2 ring-primary/20">
+              <AvatarImage src={streamer.photo_url || undefined} className="object-cover" />
+              <AvatarFallback className="text-sm bg-gradient-to-br from-primary to-secondary text-primary-foreground">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex flex-col">
+              <span className="font-semibold text-sm md:text-base leading-tight">
+                {streamer.display_name}
+              </span>
+              <span className="text-xs text-primary">
+                {streamer.handle}
+              </span>
+            </div>
+          </div>
+          
+          {/* Logo Streala - Direita */}
           <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <Zap className="h-6 w-6 text-primary" />
-            <span className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            <Zap className="h-5 w-5 text-primary" />
+            <span className="text-lg font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
               Streala
             </span>
           </Link>
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="relative overflow-hidden">
-        {/* Gradient Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-secondary/5 to-accent/10" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/20 via-transparent to-transparent opacity-50" />
-        
-        <div className="relative container mx-auto px-4 py-12 md:py-16">
-          <div className="flex flex-col items-center text-center animate-fade-in">
-            {/* Avatar with Glow */}
-            <div className="relative mb-4">
-              <div className="absolute inset-0 bg-primary/30 rounded-full blur-xl scale-110" />
-              <Avatar className="h-20 w-20 md:h-24 md:w-24 relative ring-4 ring-primary/30 shadow-2xl">
-                <AvatarImage src={streamer.photo_url || undefined} className="object-cover" />
-                <AvatarFallback className="text-xl md:text-2xl bg-gradient-to-br from-primary to-secondary text-primary-foreground">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-            </div>
+      {/* Alerts Section */}
+      <section className="flex-1 container mx-auto px-4 py-6">
+        {/* Bio do streamer (sutil) */}
+        {streamer.bio && (
+          <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-6 text-sm">
+            {streamer.bio}
+          </p>
+        )}
 
-            {/* Name & Handle */}
-            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-1">
-              {streamer.display_name}
-            </h1>
-            <p className="text-base md:text-lg text-primary font-medium mb-4">
-              {streamer.handle}
-            </p>
-
-            {/* Bio */}
-            {streamer.bio && (
-              <p className="text-muted-foreground max-w-xl mx-auto text-base md:text-lg leading-relaxed">
-                {streamer.bio}
-              </p>
-            )}
-          </div>
+        {/* Título compacto */}
+        <div className="text-center mb-6">
+          <h2 className="text-xl md:text-2xl font-bold mb-1">
+            Escolha seu Alerta <span className="inline-block animate-pulse">🎉</span>
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Clique em um alerta para enviar para a live
+          </p>
         </div>
-      </section>
 
-      {/* Not Accepting Alerts Banner */}
-      {streamer.accepting_alerts === false && (
-        <div className="container mx-auto px-4 -mt-4 mb-4">
-          <div className="flex items-center gap-3 p-4 rounded-xl border border-yellow-500/50 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400">
+        {/* Not Accepting Alerts Banner */}
+        {streamer.accepting_alerts === false && (
+          <div className="flex items-center gap-3 p-4 rounded-xl border border-yellow-500/50 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 mb-6">
             <PauseCircle className="h-6 w-6 flex-shrink-0" />
             <div>
               <p className="font-semibold">Este streamer não está aceitando alertas no momento</p>
               <p className="text-sm opacity-80">Volte mais tarde para ver os alertas disponíveis.</p>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Alerts Section */}
-      <section className="flex-1 container mx-auto px-4 py-8 md:py-12">
-        {/* Section Title */}
-        <div className="text-center mb-8 md:mb-10">
-          <h2 className="text-2xl md:text-3xl font-bold mb-2">
-            Escolha seu Alerta <span className="inline-block animate-pulse">🎉</span>
-          </h2>
-          <p className="text-muted-foreground">
-            Clique em um alerta para enviar para a live
-          </p>
-        </div>
+        )}
 
         {alertsLoading ? (
           <div className="text-center py-12">

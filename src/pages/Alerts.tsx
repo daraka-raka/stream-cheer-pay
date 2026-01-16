@@ -646,25 +646,27 @@ export default function Alerts() {
                   }
                 />
               </div>
-              <div>
-                <Label htmlFor="mediaType">Tipo de Mídia *</Label>
-                <Select
-                  value={formData.mediaType}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, mediaType: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="image">Imagem</SelectItem>
-                    <SelectItem value="audio">Áudio</SelectItem>
-                    <SelectItem value="video">Vídeo</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {formData.mediaType === "audio" && (
+              {!editingAlert && (
+                <div>
+                  <Label htmlFor="mediaType">Tipo de Mídia *</Label>
+                  <Select
+                    value={formData.mediaType}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, mediaType: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="image">Imagem</SelectItem>
+                      <SelectItem value="audio">Áudio</SelectItem>
+                      <SelectItem value="video">Vídeo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              {!editingAlert && formData.mediaType === "audio" && (
                 <div className="space-y-2">
                   <Label htmlFor="cover">Imagem de Capa * (máx. 5MB)</Label>
                   {coverPreviewUrl ? (
@@ -705,7 +707,7 @@ export default function Alerts() {
                   </p>
                 </div>
               )}
-              {formData.mediaType === "video" && (
+              {!editingAlert && formData.mediaType === "video" && (
                 <div className="space-y-2">
                   <Label htmlFor="thumbnail">Thumbnail do Vídeo (opcional, máx. 5MB)</Label>
                   {thumbnailPreviewUrl ? (
@@ -747,7 +749,7 @@ export default function Alerts() {
                 </div>
               )}
               {/* Video Preview */}
-              {formData.mediaType === "video" && videoPreviewUrl && (
+              {!editingAlert && formData.mediaType === "video" && videoPreviewUrl && (
                 <div className="relative">
                   <video 
                     src={videoPreviewUrl} 
@@ -762,7 +764,7 @@ export default function Alerts() {
                 </div>
               )}
               {/* Image Preview */}
-              {formData.mediaType === "image" && imagePreviewUrl && (
+              {!editingAlert && formData.mediaType === "image" && imagePreviewUrl && (
                 <div className="relative">
                   <img 
                     src={imagePreviewUrl} 
@@ -785,39 +787,40 @@ export default function Alerts() {
                   </Button>
                 </div>
               )}
-              <div className="space-y-2">
-                <Label htmlFor="media">
-                  {editingAlert ? "Novo Arquivo (opcional)" : "Arquivo de Mídia *"}{" "}
-                  (máx. 50MB)
-                </Label>
-                {formData.mediaType === "image" && !imagePreviewUrl && (
-                  <Input
-                    id="media"
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) handleImageSelect(file, 'media');
-                    }}
-                  />
-                )}
-                {formData.mediaType === "audio" && (
-                  <Input
-                    id="media"
-                    type="file"
-                    accept="audio/*"
-                    onChange={(e) => setMediaFile(e.target.files?.[0] || null)}
-                  />
-                )}
-                {formData.mediaType === "video" && (
-                  <Input
-                    id="media"
-                    type="file"
-                    accept="video/*"
-                    onChange={(e) => setMediaFile(e.target.files?.[0] || null)}
-                  />
-                )}
-              </div>
+              {!editingAlert && (
+                <div className="space-y-2">
+                  <Label htmlFor="media">
+                    Arquivo de Mídia * (máx. 50MB)
+                  </Label>
+                  {formData.mediaType === "image" && !imagePreviewUrl && (
+                    <Input
+                      id="media"
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleImageSelect(file, 'media');
+                      }}
+                    />
+                  )}
+                  {formData.mediaType === "audio" && (
+                    <Input
+                      id="media"
+                      type="file"
+                      accept="audio/*"
+                      onChange={(e) => setMediaFile(e.target.files?.[0] || null)}
+                    />
+                  )}
+                  {formData.mediaType === "video" && (
+                    <Input
+                      id="media"
+                      type="file"
+                      accept="video/*"
+                      onChange={(e) => setMediaFile(e.target.files?.[0] || null)}
+                    />
+                  )}
+                </div>
+              )}
             </div>
             <DialogFooter>
               <Button

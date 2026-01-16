@@ -459,36 +459,30 @@ const PublicStreamerPage = () => {
         <div className="relative container mx-auto px-4 py-12 md:py-16">
           <div className="flex flex-col items-center text-center animate-fade-in">
             {/* Avatar with Glow */}
-            <div className="relative mb-6">
+            <div className="relative mb-4">
               <div className="absolute inset-0 bg-primary/30 rounded-full blur-xl scale-110" />
-              <Avatar className="h-28 w-28 md:h-36 md:w-36 relative ring-4 ring-primary/30 shadow-2xl">
+              <Avatar className="h-20 w-20 md:h-24 md:w-24 relative ring-4 ring-primary/30 shadow-2xl">
                 <AvatarImage src={streamer.photo_url || undefined} className="object-cover" />
-                <AvatarFallback className="text-3xl md:text-4xl bg-gradient-to-br from-primary to-secondary text-primary-foreground">
+                <AvatarFallback className="text-xl md:text-2xl bg-gradient-to-br from-primary to-secondary text-primary-foreground">
                   {initials}
                 </AvatarFallback>
               </Avatar>
             </div>
 
             {/* Name & Handle */}
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-2">
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-1">
               {streamer.display_name}
             </h1>
-            <p className="text-lg md:text-xl text-primary font-medium mb-4">
-              @{streamer.handle}
+            <p className="text-base md:text-lg text-primary font-medium mb-4">
+              {streamer.handle}
             </p>
 
             {/* Bio */}
             {streamer.bio && (
-              <p className="text-muted-foreground max-w-xl mx-auto text-base md:text-lg mb-6 leading-relaxed">
+              <p className="text-muted-foreground max-w-xl mx-auto text-base md:text-lg leading-relaxed">
                 {streamer.bio}
               </p>
             )}
-
-            {/* Alerts Badge */}
-            <Badge variant="secondary" className="text-sm px-4 py-2 gap-2">
-              <Sparkles className="h-4 w-4" />
-              {alerts?.length || 0} Alertas Disponíveis
-            </Badge>
           </div>
         </div>
       </section>

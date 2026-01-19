@@ -21,29 +21,13 @@ export const AlertPlayer = ({ alert, buyerNote, duration, onComplete }: AlertPla
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    const loadMedia = async () => {
-      // Get media URL
-      const { data: mediaData } = await supabase.storage
-        .from("alerts")
-        .createSignedUrl(alert.media_path, 3600);
-      
-      if (mediaData?.signedUrl) {
-        setMediaUrl(mediaData.signedUrl);
-      }
-
-      // Get thumbnail URL if exists
-      if (alert.thumb_path) {
-        const { data: thumbData } = await supabase.storage
-          .from("alerts")
-          .createSignedUrl(alert.thumb_path, 3600);
-        
-        if (thumbData?.signedUrl) {
-          setThumbUrl(thumbData.signedUrl);
-        }
-      }
-    };
-
-    loadMedia();
+    // media_path já contém a URL pública completa do arquivo
+    // O bucket 'alerts' é público, então não precisa de signed URLs
+    setMediaUrl(alert.media_path);
+    
+    if (alert.thumb_path) {
+      setThumbUrl(alert.thumb_path);
+    }
   }, [alert]);
 
   useEffect(() => {

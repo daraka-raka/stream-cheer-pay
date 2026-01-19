@@ -13,7 +13,8 @@ interface CreateTestAlertRequest {
 interface UpdateStatusRequest {
   action: "update_status";
   queue_id: number;
-  status: "playing" | "finished";
+  // Backward compatible: older clients may send "finished"
+  status: "playing" | "done" | "finished";
   public_key: string;
 }
 
@@ -112,9 +113,14 @@ Deno.serve(async (req) => {
 
       if (!countError && count !== null && count >= 10) {
         console.log("[manage-alert-queue] Rate limit exceeded:", count);
+        // NOTE: Returning 200 avoids the frontend showing this as a runtime crash.
         return new Response(
-          JSON.stringify({ error: "Rate limit exceeded. Max 10 test alerts per hour." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({
+            error: "Rate limit exceeded. Max 10 test alerts per hour.",
+            rate_limited: true,
+            retry_after_seconds: 3600,
+          }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
@@ -154,13 +160,15 @@ Deno.serve(async (req) => {
         );
       }
 
-      // Validate status value
-      if (!["playing", "finished"].includes(body.status)) {
+      // Validate status value (accept legacy "finished")
+      if (!(["playing", "done", "finished"] as const).includes(body.status)) {
         return new Response(
           JSON.stringify({ error: "Invalid status" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
+
+      const normalizedStatus = body.status === "finished" ? "done" : body.status;
 
       // Get streamer by public key
       const { data: streamer, error: streamerError } = await supabaseAdmin
@@ -202,12 +210,12 @@ Deno.serve(async (req) => {
 
       // Update queue status
       const updateData: Record<string, any> = {
-        status: body.status,
+        status: normalizedStatus,
       };
 
-      if (body.status === "playing") {
+      if (normalizedStatus === "playing") {
         updateData.started_at = new Date().toISOString();
-      } else if (body.status === "finished") {
+      } else if (normalizedStatus === "done") {
         updateData.finished_at = new Date().toISOString();
       }
 

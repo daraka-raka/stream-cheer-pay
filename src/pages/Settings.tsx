@@ -635,10 +635,13 @@ export default function Settings() {
             </div>
             <div>
               <Label>Widget URL (para OBS/Streamlabs)</Label>
+              <p className="text-xs text-muted-foreground mb-1">
+                Use sempre o domínio publicado: <span className="font-mono text-primary">stream-cheer-pay.lovable.app</span>
+              </p>
               <div className="flex flex-col sm:flex-row gap-2 mt-1">
                 <Input
                   readOnly
-                  value={`${window.location.origin}/overlay.html?key=${streamer?.public_key || "sua-chave"}`}
+                  value={`https://stream-cheer-pay.lovable.app/overlay?key=${streamer?.public_key || "sua-chave"}`}
                   className="font-mono text-sm flex-1"
                 />
                 <div className="flex gap-2 w-full sm:w-auto">
@@ -647,7 +650,7 @@ export default function Settings() {
                     className="flex-1 sm:flex-none"
                     onClick={() =>
                       copyToClipboard(
-                        `${window.location.origin}/overlay.html?key=${streamer?.public_key}`,
+                        `https://stream-cheer-pay.lovable.app/overlay?key=${streamer?.public_key}`,
                         "Widget URL"
                       )
                     }

@@ -14,7 +14,7 @@ import Notifications from "./pages/Notifications";
 import Transactions from "./pages/Transactions";
 import Settings from "./pages/Settings";
 import PublicStreamerPage from "./pages/PublicStreamerPage";
-import WidgetOverlay from "./pages/WidgetOverlay";
+import Overlay from "./pages/Overlay";
 import MercadoPagoCallback from "./pages/MercadoPagoCallback";
 import NotFound from "./pages/NotFound";
 
@@ -38,7 +38,7 @@ const App = () => (
               <Route path="/transactions" element={<ProtectedRoute><Transactions /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="/widget/:publicKey" element={<WidgetOverlay />} />
+              <Route path="/overlay" element={<Overlay />} />
               <Route path="/@:handle" element={<PublicStreamerPage />} />
               <Route path=":handle" element={<PublicStreamerPage />} />
               <Route path="*" element={<NotFound />} />

@@ -177,6 +177,7 @@ const Overlay = () => {
       setCurrentAlert({
         ...alert,
         queueId: nextItem.id,
+        buyerName: nextItem.payload?.buyer_name,
         buyerNote: nextItem.payload?.buyer_note,
       });
     }
@@ -248,10 +249,14 @@ const Overlay = () => {
   }
 
   return (
-    <div className={`fixed inset-0 bg-transparent flex p-4 ${getPositionClasses()}`}>
+    <div 
+      className={`fixed inset-0 flex p-8 ${getPositionClasses()}`}
+      style={{ background: "transparent" }}
+    >
       {currentAlert && (
         <AlertPlayer
           alert={currentAlert}
+          buyerName={currentAlert.buyerName}
           buyerNote={currentAlert.buyerNote}
           duration={settings.overlay_image_duration_seconds}
           onComplete={handleAlertComplete}

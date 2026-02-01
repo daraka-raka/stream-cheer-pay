@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 
 interface AlertPlayerProps {
   alert: {
@@ -9,40 +8,52 @@ interface AlertPlayerProps {
     media_path: string;
     thumb_path?: string;
   };
+  buyerName?: string;
   buyerNote?: string;
   duration: number;
   onComplete: () => void;
 }
 
-export const AlertPlayer = ({ alert, buyerNote, duration, onComplete }: AlertPlayerProps) => {
+export const AlertPlayer = ({ alert, buyerName, buyerNote, duration, onComplete }: AlertPlayerProps) => {
   const [mediaUrl, setMediaUrl] = useState<string>("");
   const [thumbUrl, setThumbUrl] = useState<string>("");
+  const [isVisible, setIsVisible] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     // media_path já contém a URL pública completa do arquivo
-    // O bucket 'alerts' é público, então não precisa de signed URLs
     setMediaUrl(alert.media_path);
     
     if (alert.thumb_path) {
       setThumbUrl(alert.thumb_path);
     }
+
+    // Trigger entrance animation
+    requestAnimationFrame(() => {
+      setIsVisible(true);
+    });
   }, [alert]);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
 
+    const handleComplete = () => {
+      // Trigger exit animation
+      setIsVisible(false);
+      timer = setTimeout(onComplete, 300); // Wait for exit animation
+    };
+
     if (alert.media_type === "audio" && audioRef.current) {
       audioRef.current.play().catch(console.error);
       audioRef.current.onended = () => {
-        timer = setTimeout(onComplete, duration * 1000);
+        timer = setTimeout(handleComplete, duration * 1000);
       };
     } else if (alert.media_type === "video" && videoRef.current) {
       videoRef.current.play().catch(console.error);
-      videoRef.current.onended = onComplete;
+      videoRef.current.onended = handleComplete;
     } else if (alert.media_type === "image") {
-      timer = setTimeout(onComplete, duration * 1000);
+      timer = setTimeout(handleComplete, duration * 1000);
     }
 
     return () => {
@@ -50,51 +61,81 @@ export const AlertPlayer = ({ alert, buyerNote, duration, onComplete }: AlertPla
     };
   }, [mediaUrl, alert.media_type, duration, onComplete]);
 
+  // Estilo de texto com sombra para legibilidade em qualquer fundo
+  const textShadowStyle = {
+    textShadow: "2px 2px 4px rgba(0,0,0,0.8), -1px -1px 2px rgba(0,0,0,0.5), 0 0 20px rgba(0,0,0,0.6)",
+  };
+
   return (
-    <div className="fixed inset-0 flex items-center justify-center animate-fade-in">
-      <div className="w-full max-w-2xl mx-auto p-8">
-        {/* Media Display */}
-        <div className="bg-background/95 backdrop-blur-sm rounded-lg shadow-2xl overflow-hidden">
-          {alert.media_type === "audio" && (
-            <div className="relative">
-              {thumbUrl && (
-                <img
-                  src={thumbUrl}
-                  alt={alert.title}
-                  className="w-full h-96 object-cover"
-                />
-              )}
-              <audio ref={audioRef} src={mediaUrl} className="hidden" />
-            </div>
-          )}
+    <div 
+      className={`flex flex-col items-center gap-4 transition-all duration-300 ease-out ${
+        isVisible 
+          ? "opacity-100 scale-100" 
+          : "opacity-0 scale-95"
+      }`}
+    >
+      {/* Media Display - sem background */}
+      <div className="relative">
+        {alert.media_type === "audio" && (
+          <div className="relative">
+            {thumbUrl && (
+              <img
+                src={thumbUrl}
+                alt={alert.title}
+                className="max-w-md max-h-80 object-contain rounded-lg shadow-2xl"
+              />
+            )}
+            <audio ref={audioRef} src={mediaUrl} className="hidden" />
+          </div>
+        )}
 
-          {alert.media_type === "video" && (
-            <video
-              ref={videoRef}
-              src={mediaUrl}
-              className="w-full h-auto max-h-[80vh]"
-              playsInline
-            />
-          )}
+        {alert.media_type === "video" && (
+          <video
+            ref={videoRef}
+            src={mediaUrl}
+            className="max-w-2xl max-h-[60vh] rounded-lg shadow-2xl"
+            playsInline
+          />
+        )}
 
-          {alert.media_type === "image" && (
-            <img
-              src={mediaUrl}
-              alt={alert.title}
-              className="w-full h-auto max-h-[80vh] object-contain"
-            />
-          )}
+        {alert.media_type === "image" && (
+          <img
+            src={mediaUrl}
+            alt={alert.title}
+            className="max-w-2xl max-h-[60vh] object-contain rounded-lg shadow-2xl"
+          />
+        )}
+      </div>
 
-          {/* Message Overlay */}
-          {buyerNote && (
-            <div className="p-6 bg-gradient-to-t from-background to-transparent">
-              <div className="text-center space-y-2 animate-fade-in" style={{ animationDelay: "500ms" }}>
-                <p className="text-2xl font-bold text-foreground">{alert.title}</p>
-                <p className="text-lg text-muted-foreground italic">"{buyerNote}"</p>
-              </div>
-            </div>
-          )}
-        </div>
+      {/* Texto com sombra - legível em qualquer fundo */}
+      <div className="text-center space-y-2">
+        {/* Título do alerta */}
+        <p 
+          className="text-3xl font-bold text-white"
+          style={textShadowStyle}
+        >
+          {alert.title}
+        </p>
+
+        {/* Nome de quem comprou */}
+        {buyerName && (
+          <p 
+            className="text-xl font-semibold text-white"
+            style={textShadowStyle}
+          >
+            {buyerName}
+          </p>
+        )}
+
+        {/* Mensagem do comprador */}
+        {buyerNote && (
+          <p 
+            className="text-lg text-white/90 italic max-w-lg"
+            style={textShadowStyle}
+          >
+            "{buyerNote}"
+          </p>
+        )}
       </div>
     </div>
   );

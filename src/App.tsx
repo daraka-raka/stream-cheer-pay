@@ -40,7 +40,7 @@ const App = () => (
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="/overlay" element={<Overlay />} />
               <Route path="/@:handle" element={<PublicStreamerPage />} />
-              <Route path=":handle" element={<PublicStreamerPage />} />
+              <Route path="/:handle" element={<PublicStreamerPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </TooltipProvider>

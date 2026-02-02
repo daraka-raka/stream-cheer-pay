@@ -1,109 +1,106 @@
 
 
-# Plano: Corrigir Overlay para OBS - Refazer do Zero
+# Plano: Corrigir Políticas RLS para Widget do OBS
 
-## Diagnóstico do Problema
+## Problema Identificado
 
-O erro **"Streamer não encontrado"** está acontecendo por um motivo simples:
+O widget do OBS não consegue acessar os dados porque as políticas RLS atuais **não especificam explicitamente** o role `anon`. 
 
-A chave que você está usando na URL do OBS **não corresponde** à chave real no banco de dados.
+### Políticas Atuais
 
-| O que o banco tem | O que você provavelmente está usando |
-|-------------------|--------------------------------------|
-| `d6d1a32e-d484-43fd-8000-987fc50c3a0b` | `b0b57cdb376bdd85916f28486fb636d90a48c875b578eee2929de3334a6f88ca` (antiga) |
+| Tabela | Política | Roles | Problema |
+|--------|----------|-------|----------|
+| `alerts` | "Public can view published alerts" | `{public}` | Não inclui `anon` explicitamente; só permite alertas com `status = 'published'` |
+| `alert_queue` | "Public can view active queue items" | `{public}` | Não inclui `anon` explicitamente |
+| `streamers` | "Public can view streamer profiles" | `{anon, authenticated}` | OK |
+| `settings` | "Public can view settings for widget" | `{anon, authenticated}` | OK |
 
-**A URL correta é:**
-```
-https://stream-cheer-pay.lovable.app/overlay?key=d6d1a32e-d484-43fd-8000-987fc50c3a0b
-```
+### Fluxo do Widget (o que precisa funcionar)
+
+1. Widget carrega `public_widget_settings` (view) → **OK** (settings já tem `anon`)
+2. Widget carrega `alert_queue` com `status = 'queued'` → **FALHA** (não tem `anon`)
+3. Widget carrega detalhes do `alerts` pelo `alert_id` → **FALHA** (não tem `anon` + condição errada)
 
 ---
 
-## O Que Vou Corrigir
+## Solução
 
-Mesmo que a URL seja corrigida, o visual atual do overlay não está adequado para OBS. Vou refazer para que fique no estilo tradicional de alertas de stream.
+Criar duas novas políticas RLS com `TO anon` explícito:
 
-### 1. Refazer o Componente AlertPlayer
+### 1. Política para `alerts` - Widget Acessar Alertas na Fila
 
-Atualmente o `AlertPlayer` mostra uma "caixa" com fundo escuro, que não é apropriada para overlay transparente.
-
-**Antes (problema atual):**
-- Fundo sólido/escuro visível
-- Caixa/card estilizada
-- Não parece um overlay tradicional de stream
-
-**Depois (como ficará):**
-- Fundo totalmente transparente
-- Apenas a mídia (imagem/vídeo) centralizada
-- Nome de quem comprou e nota do comprador em texto com sombra
-- Animação de entrada/saída suave (fade + scale)
-
-### 2. Estrutura Visual do Novo Overlay
-
-```text
-+------------------------------------------+
-|                                          |
-|                                          |
-|        +------------------------+        |
-|        |                        |        |
-|        |   [IMAGEM ou VIDEO]    |        |
-|        |                        |        |
-|        +------------------------+        |
-|                                          |
-|           "Título do Alerta"             |
-|        "Mensagem do comprador"           |
-|                                          |
-+------------------------------------------+
-         (tudo com fundo transparente)
+```sql
+CREATE POLICY "Widget can view alerts in queue"
+ON public.alerts
+FOR SELECT
+TO anon
+USING (
+  id IN (
+    SELECT alert_id FROM public.alert_queue
+    WHERE status IN ('queued', 'playing')
+  )
+);
 ```
 
-### 3. Garantir Acesso Público Correto
+**Por que essa condição?**
+- Só expõe alertas que estão ativamente na fila
+- Não expõe todos os alertas do streamer
+- Segurança mínima necessária
 
-Verificarei que:
-- A view `public_widget_settings` está acessível sem login
-- A rota `/overlay` não passa por proteção de autenticação
-- Os alertas da fila podem ser lidos pelo overlay
+### 2. Política para `alert_queue` - Widget Acessar Itens Ativos
 
----
+```sql
+CREATE POLICY "Widget can view active queue for anon"
+ON public.alert_queue
+FOR SELECT
+TO anon
+USING (status IN ('queued', 'playing'));
+```
 
-## Etapas de Implementação
-
-### Etapa 1: Refatorar o AlertPlayer para Overlay Tradicional
-
-Vou modificar `src/components/AlertPlayer.tsx`:
-- Remover o card/background escuro
-- Usar apenas a mídia com bordas arredondadas e sombra
-- Adicionar texto com sombra (legível em qualquer fundo)
-- Animar entrada (fade-in + scale) e saída (fade-out)
-
-### Etapa 2: Ajustar o Overlay.tsx
-
-- Garantir que o fundo seja `transparent` e não `bg-transparent` (CSS inline)
-- Remover qualquer wrapper que adicione fundo
-- Ajustar posicionamento baseado nas configurações do streamer
-
-### Etapa 3: Validar Políticas RLS
-
-Confirmar que a view `public_widget_settings` e a tabela `alert_queue` permitem leitura anônima para que o overlay funcione no OBS (navegador sem login).
+**Nota:** Já existe uma política similar, mas sem `TO anon`. Precisamos criar uma nova com `anon` explícito.
 
 ---
 
-## Resumo Técnico
+## Migração SQL Completa
 
-| Arquivo | Alteração |
-|---------|-----------|
-| `src/components/AlertPlayer.tsx` | Refatorar visual: remover card, fundo transparente, texto com sombra, animações |
-| `src/pages/Overlay.tsx` | Garantir `background: transparent` forçado no body e container |
-| Políticas RLS | Já corrigidas na migração anterior (apenas validação) |
+```sql
+-- 1. Política para widget acessar alertas que estão na fila
+CREATE POLICY "Widget can view alerts in queue"
+ON public.alerts
+FOR SELECT
+TO anon
+USING (
+  id IN (
+    SELECT alert_id FROM public.alert_queue
+    WHERE status IN ('queued', 'playing')
+  )
+);
+
+-- 2. Política para widget acessar itens ativos da fila
+CREATE POLICY "Widget can view active queue for anon"
+ON public.alert_queue
+FOR SELECT
+TO anon
+USING (status IN ('queued', 'playing'));
+```
 
 ---
 
-## Teste Final
+## Por Que Isso Resolve
 
-Após as alterações:
+| Ação do Widget | Antes | Depois |
+|----------------|-------|--------|
+| Ler `public_widget_settings` | OK | OK |
+| Ler `alert_queue` (status queued) | BLOQUEADO | PERMITIDO |
+| Ler `alerts` pelo `alert_id` | BLOQUEADO | PERMITIDO |
+| Assinar Realtime `alert_queue` | BLOQUEADO | PERMITIDO |
 
-1. Abra em aba anônima: `https://stream-cheer-pay.lovable.app/overlay?key=d6d1a32e-d484-43fd-8000-987fc50c3a0b`
-2. Deve aparecer uma tela vazia/transparente (sem erro, sem login)
-3. Envie um alerta de teste pela página de Alertas
-4. O overlay deve mostrar a mídia + texto com animação
+---
+
+## Teste Após Migração
+
+1. Abra em aba anônima: `https://stream-cheer-pay.lovable.app/overlay?key=SEU_PUBLIC_KEY`
+2. Deve aparecer tela vazia (sem erro "Streamer não encontrado")
+3. Envie alerta de teste - deve aparecer no overlay
+4. Confira no OBS com fonte Browser nova
 

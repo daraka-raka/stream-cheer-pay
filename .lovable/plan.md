@@ -1,106 +1,76 @@
 
 
-# Plano: Corrigir Políticas RLS para Widget do OBS
+# Plano: Corrigir Conflito de Rotas do Overlay
 
 ## Problema Identificado
 
-O widget do OBS não consegue acessar os dados porque as políticas RLS atuais **não especificam explicitamente** o role `anon`. 
+A rota `/overlay` está sendo capturada pela rota `:handle` (linha 43) porque:
 
-### Políticas Atuais
+1. A rota `:handle` está definida **sem barra inicial** (`path=":handle"`)
+2. O React Router interpreta isso como um padrão que pode corresponder ao primeiro segmento de qualquer caminho
+3. Resultado: `/overlay?key=...` é tratado como `handle = "overlay"` pela `PublicStreamerPage`
+4. Como não existe streamer com handle "overlay", aparece "Streamer não encontrado"
 
-| Tabela | Política | Roles | Problema |
-|--------|----------|-------|----------|
-| `alerts` | "Public can view published alerts" | `{public}` | Não inclui `anon` explicitamente; só permite alertas com `status = 'published'` |
-| `alert_queue` | "Public can view active queue items" | `{public}` | Não inclui `anon` explicitamente |
-| `streamers` | "Public can view streamer profiles" | `{anon, authenticated}` | OK |
-| `settings` | "Public can view settings for widget" | `{anon, authenticated}` | OK |
+### Evidências
 
-### Fluxo do Widget (o que precisa funcionar)
+| URL Acessada | Rota Esperada | Rota Capturada | Resultado |
+|--------------|---------------|----------------|-----------|
+| `/overlay?key=f345...` | `/overlay` | `:handle` | "Streamer não encontrado" |
 
-1. Widget carrega `public_widget_settings` (view) → **OK** (settings já tem `anon`)
-2. Widget carrega `alert_queue` com `status = 'queued'` → **FALHA** (não tem `anon`)
-3. Widget carrega detalhes do `alerts` pelo `alert_id` → **FALHA** (não tem `anon` + condição errada)
+A screenshot do banco mostra que os dados existem e estão corretos:
+- `public_key: f3456aca-e6f7-4f7f-b2fd-5b8bab7695a2`
+- `streamer_id: 7d011bbe-38cd-4e5b-954f-4110d4736453`
 
 ---
 
 ## Solução
 
-Criar duas novas políticas RLS com `TO anon` explícito:
+Alterar a ordem e o formato das rotas no `App.tsx` para garantir que `/overlay` seja processada antes do catch-all de handles.
 
-### 1. Política para `alerts` - Widget Acessar Alertas na Fila
+### Modificação no App.tsx
 
-```sql
-CREATE POLICY "Widget can view alerts in queue"
-ON public.alerts
-FOR SELECT
-TO anon
-USING (
-  id IN (
-    SELECT alert_id FROM public.alert_queue
-    WHERE status IN ('queued', 'playing')
-  )
-);
+**Antes:**
+```tsx
+<Route path="/overlay" element={<Overlay />} />
+<Route path="/@:handle" element={<PublicStreamerPage />} />
+<Route path=":handle" element={<PublicStreamerPage />} />
+<Route path="*" element={<NotFound />} />
 ```
 
-**Por que essa condição?**
-- Só expõe alertas que estão ativamente na fila
-- Não expõe todos os alertas do streamer
-- Segurança mínima necessária
-
-### 2. Política para `alert_queue` - Widget Acessar Itens Ativos
-
-```sql
-CREATE POLICY "Widget can view active queue for anon"
-ON public.alert_queue
-FOR SELECT
-TO anon
-USING (status IN ('queued', 'playing'));
+**Depois:**
+```tsx
+<Route path="/overlay" element={<Overlay />} />
+<Route path="/@:handle" element={<PublicStreamerPage />} />
+<Route path="/:handle" element={<PublicStreamerPage />} />  {/* Adicionada barra inicial */}
+<Route path="*" element={<NotFound />} />
 ```
 
-**Nota:** Já existe uma política similar, mas sem `TO anon`. Precisamos criar uma nova com `anon` explícito.
+A adição da barra `/` antes de `:handle` transforma a rota em absoluta, garantindo que ela só corresponda a caminhos que começam com um segmento após a raiz, e não interfira com rotas específicas como `/overlay`.
 
 ---
 
-## Migração SQL Completa
+## Por Que Isso Acontece
 
-```sql
--- 1. Política para widget acessar alertas que estão na fila
-CREATE POLICY "Widget can view alerts in queue"
-ON public.alerts
-FOR SELECT
-TO anon
-USING (
-  id IN (
-    SELECT alert_id FROM public.alert_queue
-    WHERE status IN ('queued', 'playing')
-  )
-);
+No React Router v6:
+- `path=":handle"` pode ser interpretado como relativo ao contexto atual
+- `path="/:handle"` é explicitamente um caminho absoluto que corresponde a `/{qualquer-coisa}`
 
--- 2. Política para widget acessar itens ativos da fila
-CREATE POLICY "Widget can view active queue for anon"
-ON public.alert_queue
-FOR SELECT
-TO anon
-USING (status IN ('queued', 'playing'));
-```
+A rota `/overlay` deveria ter prioridade por ser mais específica, mas sem a barra inicial no `:handle`, o roteador pode ter comportamento inesperado.
 
 ---
 
-## Por Que Isso Resolve
+## Teste Após Correção
 
-| Ação do Widget | Antes | Depois |
-|----------------|-------|--------|
-| Ler `public_widget_settings` | OK | OK |
-| Ler `alert_queue` (status queued) | BLOQUEADO | PERMITIDO |
-| Ler `alerts` pelo `alert_id` | BLOQUEADO | PERMITIDO |
-| Assinar Realtime `alert_queue` | BLOQUEADO | PERMITIDO |
+1. Abra em aba anônima: `https://stream-cheer-pay.lovable.app/overlay?key=f3456aca-e6f7-4f7f-b2fd-5b8bab7695a2`
+2. Deve aparecer tela **vazia/transparente** (sem erro, sem "Carregando...")
+3. O console deve mostrar logs `[Overlay] Settings loaded: {...}`
+4. Adicione como fonte Browser no OBS - deve funcionar transparente
 
 ---
 
-## Teste Após Migração
+## Resumo Técnico
 
-1. Abra em aba anônima: `https://stream-cheer-pay.lovable.app/overlay?key=SEU_PUBLIC_KEY`
-2. Deve aparecer tela vazia (sem erro "Streamer não encontrado")
-3. Envie alerta de teste - deve aparecer no overlay
-4. Confira no OBS com fonte Browser nova
+| Arquivo | Alteração |
+|---------|-----------|
+| `src/App.tsx` | Linha 43: Alterar `path=":handle"` para `path="/:handle"` |
 

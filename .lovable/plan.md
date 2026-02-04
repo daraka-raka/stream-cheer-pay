@@ -1,92 +1,200 @@
 
-Objetivo
-- Voltar o projeto para um estado “como era antes” (funcionando/estável) e então reconstruir o overlay do OBS do zero com um caminho simples e verificável, eliminando causa raiz do “Streamer não encontrado”.
+# Melhorias Identificadas no Projeto Streala
 
-Contexto do que está acontecendo
-- A mensagem “Streamer não encontrado” vem da página pública do streamer (PublicStreamerPage) quando a rota atual não é o overlay de fato, ou quando o overlay não consegue ler as configurações públicas e acaba caindo em um fluxo que tenta resolver um handle.
-- Já mexemos em 2 frentes diferentes:
-  1) Rotas (para impedir /overlay ser capturada por /:handle)
-  2) Políticas de acesso anônimo (RLS) para leitura do overlay sem login
-- Como você quer “refazer do absoluto zero para como era antes”, o caminho mais seguro é primeiro reverter para um ponto conhecido e depois reconstruir com um “mínimo viável” que só faz 2 coisas: ler settings pela key e renderizar uma tela transparente com logs claros.
+## Resumo Executivo
 
-Parte A — Voltar “como era antes” (reverter)
-1) Reverter o projeto via Histórico (sem tentar desfazer manualmente em código)
-   - Abrir a aba “History” (Histórico) e restaurar para uma mensagem/versão anterior a:
-     - mudanças repetidas em rotas (App.tsx)
-     - mudanças visuais no AlertPlayer/Overlay
-     - migrações RLS recentes (se a versão antiga estava funcionando melhor)
-2) Critério para escolher o ponto de restore
-   - Escolher uma versão em que:
-     - a navegação da aplicação está estável
-     - a rota /overlay existe (ou pelo menos a base do app está ok)
-   - Se você lembra “qual dia/hora” funcionava, melhor ainda: restaurar exatamente esse checkpoint.
+Analisei todo o projeto e identifiquei melhorias em 5 categorias: Segurança, Performance, Experiência do Usuário, Código/Arquitetura, e Funcionalidades. Abaixo está uma lista priorizada com estimativa de impacto.
 
-Observação importante sobre banco de dados
-- Restaurar código não necessariamente “desfaz” as mudanças no backend já aplicadas. Então depois do restore, a gente valida o backend como está e ajusta com segurança (não no escuro).
+---
 
-Parte B — Recomeçar do zero (MVP do overlay)
-3) Definir um overlay mínimo e incontestável
-   - /overlay?key=... deve fazer somente:
-     a) Validar se tem ?key= (se não tiver, mostrar “Missing key”)
-     b) Buscar 1 linha em public_widget_settings por public_key
-     c) Se achou: mostrar uma tela 100% transparente e um pequeno texto de debug opcional (ativado por ?debug=1) confirmando streamer_id e settings carregadas
-     d) Se não achou: mostrar “Invalid key”
-   - Isso separa o problema em: “rota correta?” vs “acesso ao backend?” vs “fila/alertas”.
+## 1. Seguranca (Prioridade Alta)
 
-4) Blindar o roteamento para nunca cair no PublicStreamerPage
-   - Garantir que:
-     - /overlay esteja definido antes de /:handle
-     - /:handle esteja sempre como rota absoluta (com “/”)
-     - remover rotas duplicadas/confusas (por ex. /@:handle e /:handle) apenas se necessário, mas manteremos se for requisito do produto
+### 1.1 Politicas RLS Muito Permissivas
+**Problema:** O linter detectou 2 politicas RLS com `USING (true)` ou `WITH CHECK (true)` para operacoes de INSERT/UPDATE/DELETE.
 
-Parte C — Conectar fila e alertas (depois que o MVP passa)
-5) Só depois do MVP funcionando, ligar a fila
-   - Buscar alert_queue (queued/playing) do streamer_id
-   - Realtime: assinar INSERT de alert_queue filtrando streamer_id
-   - Processamento de fila: tocar 1 alerta por vez, marcar playing/done (se isso depender de função protegida, manteremos o update via backend function com validação por public_key)
+**Risco:** Usuarios anonimos ou mal-intencionados podem manipular dados de forma nao autorizada.
 
-6) Só depois que a fila aparece, buscar detalhes do alerta (alerts)
-   - Se houver bloqueio, o erro precisa ficar 100% explícito em tela quando ?debug=1 (ex.: “RLS blocked alerts select”)
+**Solucao:** Revisar e restringir as politicas RLS para validar:
+- Que o `user_id` corresponde ao dono do registro
+- Que operacoes anonimas estao limitadas apenas ao necessario (ex: overlay lendo fila)
 
-Parte D — Ajustar permissões anônimas corretamente (sem “abrir demais”)
-7) Revisar (de verdade) quais SELECTs o overlay faz anonimamente
-   - public_widget_settings: SELECT anônimo precisa funcionar
-   - alert_queue: SELECT anônimo precisa funcionar para queued/playing (idealmente restrito por streamer_id ligado à key)
-   - alerts: SELECT anônimo precisa funcionar apenas para os alert_id que estão na fila ativa (queued/playing) e, idealmente, do streamer ligado à key
+### 1.2 Protecao Contra Senhas Vazadas Desativada
+**Problema:** O linter indica que a protecao contra senhas vazadas esta desativada.
 
-8) Refinar segurança (evitar policy ampla demais)
-   - As policies que você sugeriu ajudam, mas podem expor alertas de qualquer streamer se alguém descobrir IDs na fila.
-   - Versão “zero dúvidas” de segurança:
-     - vincular anon SELECT sempre à public_key → streamer_id → fila do streamer, ao invés de somente “status IN (...)”.
-   - Isso reduz chance de “vazamento lateral” e evita que qualquer pessoa consulte fila global.
+**Solucao:** Ativar nas configuracoes de autenticacao para impedir usuarios de criar contas com senhas comprometidas em vazamentos conhecidos.
 
-Parte E — Testes guiados (para não ficar em loop)
-9) Checkpoints de teste (sempre no domínio publicado)
-   - Teste 1 (rota): abrir /overlay?key=... e confirmar que NÃO aparece “Streamer não encontrado”
-   - Teste 2 (settings): com ?debug=1, ver streamer_id carregado
-   - Teste 3 (fila): inserir 1 item queued (via fluxo normal do app) e ver contador/console no overlay
-   - Teste 4 (alerta): tocar mídia/texto
-   - Teste 5 (OBS): adicionar Browser Source e confirmar transparência
+### 1.3 Rate Limiting no Frontend
+**Problema:** O honeypot anti-spam existe, mas nao ha rate limiting robusto no frontend para prevenir abuso de criacao de transacoes.
 
-O que eu preciso de você (para o “como era antes” ser exato)
-- Indicar qual foi a última versão em que “estava como antes” (aprox. horário/mensagem no histórico). Se você não souber, eu proponho restaurar 1–2 checkpoints atrás e validar rapidamente com os Testes 1 e 2.
+**Solucao:** Adicionar debounce nos botoes de compra e considerar CAPTCHA para pagamentos de alto valor.
 
-Resultado esperado
-- Você deixa de ver “Streamer não encontrado” porque:
-  - a rota /overlay não cai mais em /:handle
-  - o overlay tem mensagens de erro específicas (key faltando, key inválida, bloqueio de leitura) em vez de erro genérico de streamer
-- E o overlay funciona no OBS sem login, de forma previsível.
+---
 
-Riscos e como mitigamos
-- Risco: restaurar código mas o backend já estar “diferente”
-  - Mitigação: validar cada SELECT do overlay com ?debug=1 e ajustar policies de forma mínima e rastreável
-- Risco: policies anônimas ficarem amplas demais
-  - Mitigação: atrelar acesso ao streamer derivado da public_key, não a uma policy global por status
+## 2. Performance (Prioridade Media)
 
-Sequência de execução (ordem)
-1) Restore pelo History para “como era antes”
-2) Confirmar rota /overlay (Teste 1)
-3) Implementar overlay MVP (Teste 2)
-4) Conectar fila e alerts (Teste 3/4)
-5) Ajustar RLS com base no que o overlay realmente consulta (Teste 2/3 novamente)
-6) Validar no OBS (Teste 5)
+### 2.1 Multiplas Queries Redundantes no Dashboard
+**Problema:** O Dashboard faz varias queries separadas buscando `streamer_id` repetidamente:
+- `loadStreamerData` busca streamer
+- `loadStats` busca streamer novamente
+- `loadTopAlerts` busca streamer novamente
+- `loadQueueItems` busca streamer novamente
+- `loadChartData` busca streamer novamente
+- `loadDashboardSettings` busca streamer novamente
+
+Sao 6 queries identicas para obter o mesmo `streamer_id`.
+
+**Solucao:** Buscar o streamer uma unica vez e passar o ID para as funcoes subsequentes:
+
+```typescript
+useEffect(() => {
+  if (user) {
+    loadAllData();
+  }
+}, [user]);
+
+const loadAllData = async () => {
+  const streamerData = await loadStreamerData();
+  if (streamerData) {
+    await Promise.all([
+      loadStats(streamerData.id),
+      loadTopAlerts(streamerData.id),
+      loadQueueItems(streamerData.id),
+      loadDashboardSettings(streamerData.id),
+    ]);
+  }
+};
+```
+
+### 2.2 Queries Sem Limite no Dashboard
+**Problema:** Algumas queries nao tem limite e podem retornar milhares de registros:
+- `loadTopAlerts` busca todos os alertas com transacoes pagas
+- `loadStats` busca todas as transacoes
+
+**Solucao:** Adicionar `.limit()` apropriado ou usar agregacoes no banco.
+
+### 2.3 Imagens Sem Lazy Loading
+**Problema:** As imagens de alertas carregam todas de uma vez, mesmo fora da viewport.
+
+**Solucao:** Adicionar `loading="lazy"` nas tags `<img>` dos cards de alerta.
+
+---
+
+## 3. Experiencia do Usuario (Prioridade Media)
+
+### 3.1 Footer com Ano Desatualizado
+**Problema:** A Landing page mostra "2025" fixo no footer.
+
+**Solucao:** Usar ano dinamico:
+```tsx
+<p>© {new Date().getFullYear()} Streala. Todos os direitos reservados.</p>
+```
+
+### 3.2 Link "/explore" Nao Existe
+**Problema:** Na Landing page, o botao "Ver Alertas de Streamers" linka para `/explore`, mas essa rota nao existe.
+
+**Solucao:** Criar a pagina ou remover/alterar o botao.
+
+### 3.3 Feedback Visual Durante Operacoes Longas
+**Problema:** Algumas operacoes (upload de midia, salvar perfil) nao mostram loading spinner nos botoes.
+
+**Solucao:** Adicionar estado de loading e desabilitar botoes durante operacoes.
+
+### 3.4 Mensagens de Erro Genericas
+**Problema:** Varias funcoes mostram apenas "Erro ao..." sem detalhes.
+
+**Solucao:** Usar o `createUserError` que ja existe em `error-utils.ts` de forma mais consistente.
+
+### 3.5 Overlay Sem Mensagem de Conexao
+**Problema:** Quando o overlay esta conectado e aguardando alertas, nao ha feedback visual (a nao ser no modo debug).
+
+**Solucao:** Adicionar um indicador sutil de "Conectado" que desaparece apos alguns segundos.
+
+---
+
+## 4. Codigo e Arquitetura (Prioridade Baixa)
+
+### 4.1 Tipos `any` Excessivos
+**Problema:** Varios arquivos usam `any` em vez de tipos especificos:
+- `Dashboard.tsx`: `topAlerts`, `queueItems`, `chartData`, `dashboardSettings`
+- `Alerts.tsx`: `alerts`, `editingAlert`, `previewAlert`
+- `Settings.tsx`: `streamer`, `settings`, `mpConfig`
+- `Transactions.tsx`: `transactions`, `alerts`
+
+**Solucao:** Criar interfaces TypeScript especificas para cada entidade.
+
+### 4.2 Componentes Muito Grandes
+**Problema:** Alguns arquivos sao muito extensos:
+- `Dashboard.tsx`: 611 linhas
+- `Alerts.tsx`: 969 linhas
+- `Settings.tsx`: 960 linhas
+- `PublicStreamerPage.tsx`: 792 linhas
+
+**Solucao:** Extrair logica para hooks customizados e componentes menores:
+- `useDashboardStats()` hook
+- `AlertCard` componente
+- `SettingsSection` componentes
+
+### 4.3 Duplicacao de Logica
+**Problema:** A funcao `generateHandle` esta duplicada (provavelmente em Auth.tsx e Settings.tsx).
+
+**Solucao:** Mover para `lib/utils.ts` e reutilizar.
+
+### 4.4 Imports Nao Utilizados
+**Problema:** Possivel existencia de imports nao utilizados que aumentam o bundle.
+
+**Solucao:** Rodar linter com regra `no-unused-imports`.
+
+---
+
+## 5. Funcionalidades Ausentes (Prioridade Variavel)
+
+### 5.1 Pagina /explore
+**Status:** Link existe mas pagina nao foi implementada.
+
+**Descricao:** Seria uma galeria publica de streamers para descoberta.
+
+### 5.2 Paginacao na Lista de Alertas
+**Problema:** Se um streamer criar muitos alertas, todos carregam de uma vez.
+
+**Solucao:** Implementar paginacao ou scroll infinito.
+
+### 5.3 Confirmacao de Email
+**Status:** Ja implementado, mas poderia ter uma pagina de reenvio de email.
+
+### 5.4 Recuperacao de Senha
+**Status:** Nao vi implementacao de "Esqueci minha senha".
+
+**Solucao:** Adicionar fluxo de recuperacao de senha.
+
+### 5.5 Preview do Overlay no Dashboard
+**Problema:** O streamer precisa abrir o OBS para ver como o overlay funciona.
+
+**Solucao:** Adicionar um botao "Preview" que abre uma modal com o overlay renderizado.
+
+---
+
+## Tabela de Priorizacao
+
+| Melhoria | Impacto | Esforco | Prioridade |
+|----------|---------|---------|------------|
+| RLS Permissivas | Alto | Baixo | Critica |
+| Senhas Vazadas | Alto | Muito Baixo | Critica |
+| Queries Redundantes | Medio | Baixo | Alta |
+| Link /explore Quebrado | Baixo | Muito Baixo | Alta |
+| Ano do Footer | Baixo | Muito Baixo | Alta |
+| Tipos any | Medio | Medio | Media |
+| Lazy Loading Imagens | Baixo | Muito Baixo | Media |
+| Componentes Grandes | Medio | Alto | Baixa |
+| Pagina /explore | Medio | Medio | Baixa |
+| Recuperacao de Senha | Medio | Medio | Media |
+
+---
+
+## Proximos Passos Sugeridos
+
+1. **Corrigir seguranca** - RLS e senhas vazadas
+2. **Quick wins** - Footer, link /explore, lazy loading
+3. **Performance** - Consolidar queries do Dashboard
+4. **Tipagem** - Adicionar interfaces TypeScript
+
+Qual dessas areas voce gostaria de abordar primeiro?

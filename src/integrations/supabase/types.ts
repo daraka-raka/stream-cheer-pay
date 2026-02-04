@@ -499,6 +499,74 @@ export type Database = {
       }
     }
     Views: {
+      public_alert_queue: {
+        Row: {
+          alert_id: string | null
+          enqueued_at: string | null
+          finished_at: string | null
+          id: number | null
+          is_test: boolean | null
+          payload: Json | null
+          started_at: string | null
+          status: string | null
+          streamer_id: string | null
+          transaction_id: string | null
+        }
+        Insert: {
+          alert_id?: string | null
+          enqueued_at?: string | null
+          finished_at?: string | null
+          id?: number | null
+          is_test?: boolean | null
+          payload?: never
+          started_at?: string | null
+          status?: string | null
+          streamer_id?: string | null
+          transaction_id?: string | null
+        }
+        Update: {
+          alert_id?: string | null
+          enqueued_at?: string | null
+          finished_at?: string | null
+          id?: number | null
+          is_test?: boolean | null
+          payload?: never
+          started_at?: string | null
+          status?: string | null
+          streamer_id?: string | null
+          transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alert_queue_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "alerts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alert_queue_streamer_id_fkey"
+            columns: ["streamer_id"]
+            isOneToOne: false
+            referencedRelation: "public_streamer_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alert_queue_streamer_id_fkey"
+            columns: ["streamer_id"]
+            isOneToOne: false
+            referencedRelation: "streamers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alert_queue_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       public_streamer_profiles: {
         Row: {
           accepting_alerts: boolean | null

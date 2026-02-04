@@ -94,6 +94,7 @@ export const QueuePreview = ({ queue, loading }: QueuePreviewProps) => {
                 <img
                   src={item.alerts.thumb_path}
                   alt={item.alerts.title || "Alert"}
+                  loading="lazy"
                   className="w-10 h-10 rounded object-cover"
                 />
               )}

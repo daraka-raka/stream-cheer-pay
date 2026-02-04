@@ -81,10 +81,11 @@ export const TopAlerts = ({ alerts, loading }: TopAlertsProps) => {
                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
                   {index + 1}
                 </div>
-                {alert.thumb_path && (
+              {alert.thumb_path && (
                   <img
                     src={alert.thumb_path}
                     alt={alert.title}
+                    loading="lazy"
                     className="w-12 h-12 rounded object-cover"
                   />
                 )}

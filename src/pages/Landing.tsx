@@ -45,9 +45,9 @@ const Landing = () => {
                   <Zap className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-              <Link to="/explore">
+              <Link to="/auth/login">
                 <Button size="lg" variant="outline" className="text-lg px-8 py-6 w-full sm:w-auto">
-                  Ver Alertas de Streamers
+                  Entrar na Plataforma
                 </Button>
               </Link>
             </div>
@@ -220,7 +220,7 @@ const Landing = () => {
       {/* Footer */}
       <footer className="border-t border-border/40 py-8 mt-20">
         <div className="container mx-auto px-4 text-center text-muted-foreground">
-          <p>&copy; 2025 Streala. Todos os direitos reservados.</p>
+          <p>&copy; {new Date().getFullYear()} Streala. Todos os direitos reservados.</p>
         </div>
       </footer>
     </div>

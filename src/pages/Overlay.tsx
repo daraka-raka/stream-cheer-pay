@@ -58,10 +58,7 @@ const Overlay = () => {
 
       try {
         const { data, error } = await supabase
-          .from("public_widget_settings")
-          .select("*")
-          .eq("public_key", publicKey)
-          .single();
+          .rpc("get_widget_settings", { p_public_key: publicKey });
 
         if (error) {
           console.error("[Overlay] Error loading settings:", error);
@@ -72,11 +69,13 @@ const Overlay = () => {
           return;
         }
 
-        if (!data) {
+        if (!data || data.length === 0) {
           console.log("[Overlay] No settings found for key");
           setStatus({ type: "invalid_key" });
           return;
         }
+
+        const settings = data[0];
 
         console.log("[Overlay] Settings loaded successfully:", data);
         setStatus({

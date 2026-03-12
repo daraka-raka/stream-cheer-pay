@@ -635,6 +635,17 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_widget_settings: {
+        Args: { p_public_key: string }
+        Returns: {
+          accepting_alerts: boolean
+          alert_between_delay_seconds: number
+          alert_start_delay_seconds: number
+          overlay_image_duration_seconds: number
+          streamer_id: string
+          widget_position: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

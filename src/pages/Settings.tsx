@@ -470,7 +470,10 @@ export default function Settings() {
                   
                   setMpLoading(true);
                   const redirectUri = `${window.location.origin}/auth/callback/mercadopago`;
-                  const state = btoa(JSON.stringify({ streamer_id: streamer.id }));
+                  // CSRF protection: generate cryptographic random state
+                  const csrfToken = crypto.randomUUID();
+                  sessionStorage.setItem("mp_oauth_state", csrfToken);
+                  const state = btoa(JSON.stringify({ streamer_id: streamer.id, csrf: csrfToken }));
                   
                   const authUrl = `https://auth.mercadopago.com.br/authorization?` +
                     `client_id=${MP_CLIENT_ID}&` +
@@ -498,7 +501,7 @@ export default function Settings() {
               </Button>
               {!MP_CLIENT_ID && (
                 <p className="text-sm text-destructive">
-                  ⚠️ VITE_MP_CLIENT_ID não configurado no ambiente
+                  ⚠️ Integração com Mercado Pago não configurada
                 </p>
               )}
             </div>

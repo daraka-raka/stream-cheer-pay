@@ -1,156 +1,200 @@
 
+# Melhorias Identificadas no Projeto Streala
 
-<analise_de_seguranca>
+## Resumo Executivo
 
-## Vetores de Ataque Identificados
-
-### CRITICO 1: Emails de streamers expostos publicamente
-- Tabela `streamers` tem SELECT com `USING (true)` para `anon,authenticated`
-- Campos `email` e `auth_user_id` acessiveis por qualquer usuario anonimo
-- Atacante pode fazer scraping de todos os emails via API publica
-- Impacto: violacao de privacidade, phishing, LGPD
-
-### CRITICO 2: Tabela `settings` expoe `webhook_url` para anonimos
-- Politica "Anon can view widget settings via view" com `USING (true)`
-- O overlay so precisa de campos especificos (duracao, posicao), mas a politica SELECT expoe TUDO
-- `webhook_url` exposto permite que atacantes descubram endpoints privados
-
-### CRITICO 3: Politica RLS `alert_queue` ALL com `USING (true)`
-- "Service role can manage queue" aplica a `{public}` com USING(true)
-- Isso da acesso total (INSERT/UPDATE/DELETE/SELECT) a qualquer usuario
-- Atacante pode deletar fila inteira ou inserir alertas falsos
-- A intencao era `service_role` mas esta aplicado a `public`
-
-### ALTO 4: OAuth state sem protecao CSRF
-- `Settings.tsx` linha 473: `state = btoa(JSON.stringify({ streamer_id: streamer.id }))`
-- O state e deterministico e previsivel - qualquer pessoa que saiba o `streamer_id` pode forjar
-- `MercadoPagoCallback.tsx` aceita qualquer state sem validar que pertence ao usuario logado
-- Atacante pode vincular a conta MP dele ao streamer de outra pessoa
-
-### ALTO 5: `mp-exchange-token` nao valida autenticacao
-- A edge function aceita qualquer `streamer_id` sem verificar que o chamador e o dono
-- `verify_jwt = false` no config.toml
-- Qualquer pessoa com um code OAuth valido pode vincular a conta de qualquer streamer
-
-### MEDIO 6: `VITE_MP_CLIENT_ID` exposto no cliente
-- O Client ID do Mercado Pago esta no .env como variavel VITE_ (exposta no bundle)
-- Client ID nao e secret, mas a mensagem de erro na linha 501 expoe o nome da variavel
-
-### MEDIO 7: Leaked password protection desativada
-- Scanner detectou que HIBP esta desativado apesar do config.toml dizer `enable_hibp = true`
-- Pode ser que a config nao foi aplicada corretamente
-
-### MEDIO 8: Headers de seguranca ausentes no index.html
-- Sem Content-Security-Policy
-- Sem X-Content-Type-Options
-- Sem Referrer-Policy
-- Sem Permissions-Policy
-
-### MEDIO 9: buyer_note sem sanitizacao no backend
-- `create-pix-payment` salva buyer_note direto no banco sem strip de HTML
-- React escapa no JSX, mas o overlay pode renderizar em contextos diferentes
-- O campo `buyer_note` tambem aparece no payload do `alert_queue` (campo JSONB)
-
-### BAIXO 10: Erro 500 do create-pix-payment vaza mensagem interna
-- Linha 280-281: `JSON.stringify({ error: errorMessage })` envia mensagem de erro original
-- Pode expor detalhes do MP API ou infraestrutura
-
-### BAIXO 11: Build error existente
-- `AlertPlayer.tsx` linha 39: `NodeJS` namespace nao encontrado (falta type import)
-
-### INFO 12: `public_streamer_profiles` view sem RLS policies
-- A view existe mas nao tem politicas definidas - inconsistencia
-
-</analise_de_seguranca>
+Analisei todo o projeto e identifiquei melhorias em 5 categorias: Segurança, Performance, Experiência do Usuário, Código/Arquitetura, e Funcionalidades. Abaixo está uma lista priorizada com estimativa de impacto.
 
 ---
 
-# Plano de Correcoes de Seguranca
+## 1. Seguranca (Prioridade Alta)
 
-## 1. [CRITICO] Corrigir RLS da `alert_queue` - policy ALL com USING(true)
-A politica "Service role can manage queue" esta aplicada ao role `public` em vez de `service_role`. Corrigir para aplicar apenas ao `service_role`.
+### 1.1 Politicas RLS Muito Permissivas
+**Problema:** O linter detectou 2 politicas RLS com `USING (true)` ou `WITH CHECK (true)` para operacoes de INSERT/UPDATE/DELETE.
 
-**Migracao SQL:**
-```sql
-DROP POLICY "Service role can manage queue" ON public.alert_queue;
-CREATE POLICY "Service role can manage queue"
-ON public.alert_queue FOR ALL TO service_role USING (true) WITH CHECK (true);
-```
+**Risco:** Usuarios anonimos ou mal-intencionados podem manipular dados de forma nao autorizada.
 
-## 2. [CRITICO] Restringir SELECT na tabela `streamers` para nao expor email
-Substituir a politica publica por uma que exclui campos sensiveis. Como nao podemos fazer column-level RLS, a solucao e:
-- Manter SELECT publico somente via a view `public_streamer_profiles` (que ja exclui email)
-- Restringir SELECT direto na tabela `streamers` para apenas o proprio usuario
+**Solucao:** Revisar e restringir as politicas RLS para validar:
+- Que o `user_id` corresponde ao dono do registro
+- Que operacoes anonimas estao limitadas apenas ao necessario (ex: overlay lendo fila)
 
-**Migracao SQL:**
-```sql
-DROP POLICY "Public can view streamer profiles" ON public.streamers;
-CREATE POLICY "Public can view basic streamer info"
-ON public.streamers FOR SELECT TO anon, authenticated
-USING (true);
--- Mas precisamos garantir que a view public_streamer_profiles
--- e o unico ponto de acesso publico e que ela nao expoe email.
--- Como a view ja existe e exclui email, vamos criar uma security definer function
--- para acesso publico e restringir o SELECT direto.
-```
+### 1.2 Protecao Contra Senhas Vazadas Desativada
+**Problema:** O linter indica que a protecao contra senhas vazadas esta desativada.
 
-Na verdade, o overlay e a pagina publica ja usam `get_public_streamer_profile` (RPC). O problema e que a politica `Public can view streamer profiles` permite SELECT direto na tabela `streamers` para `anon`. Vamos restringi-la.
+**Solucao:** Ativar nas configuracoes de autenticacao para impedir usuarios de criar contas com senhas comprometidas em vazamentos conhecidos.
 
-**Migracao SQL:**
-```sql
-DROP POLICY "Public can view streamer profiles" ON public.streamers;
--- Manter acesso publico apenas para campos nao-sensiveis via colunas especificas
--- Como RLS nao suporta column-level, usamos a abordagem de security definer functions
--- A RPC get_public_streamer_profile ja existe e e SECURITY DEFINER
--- O overlay usa public_widget_settings (view)
--- Precisamos manter SELECT para anon pois o overlay busca alerts que fazem join com streamers
--- Solucao: criar uma view segura ou aceitar que o email esta exposto
--- Melhor solucao: remover a politica anon e ajustar o overlay para nao precisar de SELECT direto
-```
+### 1.3 Rate Limiting no Frontend
+**Problema:** O honeypot anti-spam existe, mas nao ha rate limiting robusto no frontend para prevenir abuso de criacao de transacoes.
 
-## 3. [CRITICO] Restringir SELECT na tabela `settings` para anon
-Remover politica "Anon can view widget settings via view" e garantir que a view `public_widget_settings` funcione com SECURITY DEFINER.
-
-**Migracao SQL:**
-```sql
-DROP POLICY "Anon can view widget settings via view" ON public.settings;
--- A view public_widget_settings precisa de acesso, entao criamos uma
--- funcao SECURITY DEFINER que retorna apenas os campos necessarios
-```
-
-## 4. [ALTO] Proteger OAuth flow contra CSRF
-- Adicionar token aleatorio ao `state` do OAuth e validar no callback
-- Validar no `mp-exchange-token` que o `streamer_id` pertence ao usuario autenticado
-
-## 5. [ALTO] Autenticar `mp-exchange-token`
-- Exigir Authorization header e validar que o usuario autenticado e dono do `streamer_id`
-
-## 6. [MEDIO] Sanitizar `buyer_note` no backend
-- Strip HTML tags antes de salvar no banco
-
-## 7. [MEDIO] Sanitizar erro no `create-pix-payment` resposta 500
-- Retornar mensagem generica em vez da mensagem de erro original
-
-## 8. [MEDIO] Adicionar meta headers de seguranca no `index.html`
-
-## 9. [BAIXO] Corrigir build error `NodeJS` namespace em AlertPlayer.tsx
-
-## 10. [MEDIO] Ativar leaked password protection
+**Solucao:** Adicionar debounce nos botoes de compra e considerar CAPTCHA para pagamentos de alto valor.
 
 ---
 
-## Resumo de Prioridades
+## 2. Performance (Prioridade Media)
 
-| # | Severidade | Correcao | Tipo |
-|---|-----------|----------|------|
-| 1 | CRITICO | alert_queue RLS: public -> service_role | DB Migration |
-| 2 | CRITICO | streamers: restringir SELECT anon (email exposto) | DB Migration |
-| 3 | CRITICO | settings: restringir SELECT anon (webhook_url exposto) | DB Migration |
-| 4 | ALTO | OAuth CSRF protection no state | Code + Edge Function |
-| 5 | ALTO | mp-exchange-token: autenticar usuario | Edge Function |
-| 6 | MEDIO | Sanitizar buyer_note (strip HTML) | Edge Function |
-| 7 | MEDIO | Erro generico no create-pix-payment | Edge Function |
-| 8 | MEDIO | Security headers no index.html | HTML |
-| 9 | BAIXO | Fix NodeJS namespace (AlertPlayer.tsx) | Code |
-| 10 | MEDIO | Leaked password protection | Auth Config |
+### 2.1 Multiplas Queries Redundantes no Dashboard
+**Problema:** O Dashboard faz varias queries separadas buscando `streamer_id` repetidamente:
+- `loadStreamerData` busca streamer
+- `loadStats` busca streamer novamente
+- `loadTopAlerts` busca streamer novamente
+- `loadQueueItems` busca streamer novamente
+- `loadChartData` busca streamer novamente
+- `loadDashboardSettings` busca streamer novamente
 
+Sao 6 queries identicas para obter o mesmo `streamer_id`.
+
+**Solucao:** Buscar o streamer uma unica vez e passar o ID para as funcoes subsequentes:
+
+```typescript
+useEffect(() => {
+  if (user) {
+    loadAllData();
+  }
+}, [user]);
+
+const loadAllData = async () => {
+  const streamerData = await loadStreamerData();
+  if (streamerData) {
+    await Promise.all([
+      loadStats(streamerData.id),
+      loadTopAlerts(streamerData.id),
+      loadQueueItems(streamerData.id),
+      loadDashboardSettings(streamerData.id),
+    ]);
+  }
+};
+```
+
+### 2.2 Queries Sem Limite no Dashboard
+**Problema:** Algumas queries nao tem limite e podem retornar milhares de registros:
+- `loadTopAlerts` busca todos os alertas com transacoes pagas
+- `loadStats` busca todas as transacoes
+
+**Solucao:** Adicionar `.limit()` apropriado ou usar agregacoes no banco.
+
+### 2.3 Imagens Sem Lazy Loading
+**Problema:** As imagens de alertas carregam todas de uma vez, mesmo fora da viewport.
+
+**Solucao:** Adicionar `loading="lazy"` nas tags `<img>` dos cards de alerta.
+
+---
+
+## 3. Experiencia do Usuario (Prioridade Media)
+
+### 3.1 Footer com Ano Desatualizado
+**Problema:** A Landing page mostra "2025" fixo no footer.
+
+**Solucao:** Usar ano dinamico:
+```tsx
+<p>© {new Date().getFullYear()} Streala. Todos os direitos reservados.</p>
+```
+
+### 3.2 Link "/explore" Nao Existe
+**Problema:** Na Landing page, o botao "Ver Alertas de Streamers" linka para `/explore`, mas essa rota nao existe.
+
+**Solucao:** Criar a pagina ou remover/alterar o botao.
+
+### 3.3 Feedback Visual Durante Operacoes Longas
+**Problema:** Algumas operacoes (upload de midia, salvar perfil) nao mostram loading spinner nos botoes.
+
+**Solucao:** Adicionar estado de loading e desabilitar botoes durante operacoes.
+
+### 3.4 Mensagens de Erro Genericas
+**Problema:** Varias funcoes mostram apenas "Erro ao..." sem detalhes.
+
+**Solucao:** Usar o `createUserError` que ja existe em `error-utils.ts` de forma mais consistente.
+
+### 3.5 Overlay Sem Mensagem de Conexao
+**Problema:** Quando o overlay esta conectado e aguardando alertas, nao ha feedback visual (a nao ser no modo debug).
+
+**Solucao:** Adicionar um indicador sutil de "Conectado" que desaparece apos alguns segundos.
+
+---
+
+## 4. Codigo e Arquitetura (Prioridade Baixa)
+
+### 4.1 Tipos `any` Excessivos
+**Problema:** Varios arquivos usam `any` em vez de tipos especificos:
+- `Dashboard.tsx`: `topAlerts`, `queueItems`, `chartData`, `dashboardSettings`
+- `Alerts.tsx`: `alerts`, `editingAlert`, `previewAlert`
+- `Settings.tsx`: `streamer`, `settings`, `mpConfig`
+- `Transactions.tsx`: `transactions`, `alerts`
+
+**Solucao:** Criar interfaces TypeScript especificas para cada entidade.
+
+### 4.2 Componentes Muito Grandes
+**Problema:** Alguns arquivos sao muito extensos:
+- `Dashboard.tsx`: 611 linhas
+- `Alerts.tsx`: 969 linhas
+- `Settings.tsx`: 960 linhas
+- `PublicStreamerPage.tsx`: 792 linhas
+
+**Solucao:** Extrair logica para hooks customizados e componentes menores:
+- `useDashboardStats()` hook
+- `AlertCard` componente
+- `SettingsSection` componentes
+
+### 4.3 Duplicacao de Logica
+**Problema:** A funcao `generateHandle` esta duplicada (provavelmente em Auth.tsx e Settings.tsx).
+
+**Solucao:** Mover para `lib/utils.ts` e reutilizar.
+
+### 4.4 Imports Nao Utilizados
+**Problema:** Possivel existencia de imports nao utilizados que aumentam o bundle.
+
+**Solucao:** Rodar linter com regra `no-unused-imports`.
+
+---
+
+## 5. Funcionalidades Ausentes (Prioridade Variavel)
+
+### 5.1 Pagina /explore
+**Status:** Link existe mas pagina nao foi implementada.
+
+**Descricao:** Seria uma galeria publica de streamers para descoberta.
+
+### 5.2 Paginacao na Lista de Alertas
+**Problema:** Se um streamer criar muitos alertas, todos carregam de uma vez.
+
+**Solucao:** Implementar paginacao ou scroll infinito.
+
+### 5.3 Confirmacao de Email
+**Status:** Ja implementado, mas poderia ter uma pagina de reenvio de email.
+
+### 5.4 Recuperacao de Senha
+**Status:** Nao vi implementacao de "Esqueci minha senha".
+
+**Solucao:** Adicionar fluxo de recuperacao de senha.
+
+### 5.5 Preview do Overlay no Dashboard
+**Problema:** O streamer precisa abrir o OBS para ver como o overlay funciona.
+
+**Solucao:** Adicionar um botao "Preview" que abre uma modal com o overlay renderizado.
+
+---
+
+## Tabela de Priorizacao
+
+| Melhoria | Impacto | Esforco | Prioridade |
+|----------|---------|---------|------------|
+| RLS Permissivas | Alto | Baixo | Critica |
+| Senhas Vazadas | Alto | Muito Baixo | Critica |
+| Queries Redundantes | Medio | Baixo | Alta |
+| Link /explore Quebrado | Baixo | Muito Baixo | Alta |
+| Ano do Footer | Baixo | Muito Baixo | Alta |
+| Tipos any | Medio | Medio | Media |
+| Lazy Loading Imagens | Baixo | Muito Baixo | Media |
+| Componentes Grandes | Medio | Alto | Baixa |
+| Pagina /explore | Medio | Medio | Baixa |
+| Recuperacao de Senha | Medio | Medio | Media |
+
+---
+
+## Proximos Passos Sugeridos
+
+1. **Corrigir seguranca** - RLS e senhas vazadas
+2. **Quick wins** - Footer, link /explore, lazy loading
+3. **Performance** - Consolidar queries do Dashboard
+4. **Tipagem** - Adicionar interfaces TypeScript
+
+Qual dessas areas voce gostaria de abordar primeiro?

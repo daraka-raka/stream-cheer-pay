@@ -58,10 +58,7 @@ const Overlay = () => {
 
       try {
         const { data, error } = await supabase
-          .from("public_widget_settings")
-          .select("*")
-          .eq("public_key", publicKey)
-          .single();
+          .rpc("get_widget_settings", { p_public_key: publicKey });
 
         if (error) {
           console.error("[Overlay] Error loading settings:", error);
@@ -72,21 +69,23 @@ const Overlay = () => {
           return;
         }
 
-        if (!data) {
+        if (!data || data.length === 0) {
           console.log("[Overlay] No settings found for key");
           setStatus({ type: "invalid_key" });
           return;
         }
 
-        console.log("[Overlay] Settings loaded successfully:", data);
+        const settings = data[0];
+
+        console.log("[Overlay] Settings loaded successfully:", settings);
         setStatus({
           type: "ready",
           settings: {
-            streamer_id: data.streamer_id!,
-            overlay_image_duration_seconds: data.overlay_image_duration_seconds ?? 5,
-            widget_position: data.widget_position ?? "center",
-            alert_start_delay_seconds: data.alert_start_delay_seconds ?? 0,
-            alert_between_delay_seconds: data.alert_between_delay_seconds ?? 1,
+            streamer_id: settings.streamer_id!,
+            overlay_image_duration_seconds: settings.overlay_image_duration_seconds ?? 5,
+            widget_position: settings.widget_position ?? "center",
+            alert_start_delay_seconds: settings.alert_start_delay_seconds ?? 0,
+            alert_between_delay_seconds: settings.alert_between_delay_seconds ?? 1,
           },
         });
       } catch (err) {

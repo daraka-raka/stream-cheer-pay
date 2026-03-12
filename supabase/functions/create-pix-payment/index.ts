@@ -154,17 +154,22 @@ serve(async (req) => {
       );
     }
 
+    // Sanitize buyer_note: strip HTML tags
+    const sanitizedNote = buyer_note 
+      ? buyer_note.replace(/<[^>]*>/g, "").trim().slice(0, 200) 
+      : undefined;
+
     console.log("[create-pix-payment] Validation passed for transaction:", transaction_id);
 
-    // Update transaction with buyer note if provided
-    if (buyer_note) {
+    // Update transaction with sanitized buyer note if provided
+    if (sanitizedNote) {
       const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
       const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
       const supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
       
       await supabaseClient
         .from("transactions")
-        .update({ buyer_note })
+        .update({ buyer_note: sanitizedNote })
         .eq("id", transaction_id);
     }
 
@@ -277,7 +282,7 @@ serve(async (req) => {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error("[create-pix-payment] Error:", errorMessage);
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ error: "Erro ao processar pagamento. Tente novamente." }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

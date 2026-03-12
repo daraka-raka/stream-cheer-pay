@@ -36,7 +36,7 @@ export const AlertPlayer = ({ alert, buyerName, buyerNote, duration, onComplete 
   }, [alert]);
 
   useEffect(() => {
-    let timer: NodeJS.Timeout;
+    let timer: ReturnType<typeof setTimeout>;
 
     const handleComplete = () => {
       // Trigger exit animation

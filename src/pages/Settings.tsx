@@ -501,7 +501,7 @@ export default function Settings() {
               </Button>
               {!MP_CLIENT_ID && (
                 <p className="text-sm text-destructive">
-                  ⚠️ VITE_MP_CLIENT_ID não configurado no ambiente
+                  ⚠️ Integração com Mercado Pago não configurada
                 </p>
               )}
             </div>

@@ -29,12 +29,22 @@ export default function MercadoPagoCallback() {
         return;
       }
 
-      // Decode state to get streamer_id
+      // Decode state and validate CSRF token
       let streamerId: string;
       try {
         const stateData = JSON.parse(atob(state || ""));
         streamerId = stateData.streamer_id;
         if (!streamerId) throw new Error("streamer_id missing");
+
+        // CSRF validation
+        const savedCsrf = sessionStorage.getItem("mp_oauth_state");
+        if (!savedCsrf || savedCsrf !== stateData.csrf) {
+          setStatus("error");
+          setErrorMessage("Token de segurança inválido. Tente conectar novamente.");
+          return;
+        }
+        // Clear used token
+        sessionStorage.removeItem("mp_oauth_state");
       } catch {
         setStatus("error");
         setErrorMessage("Estado de sessão inválido. Tente novamente.");
@@ -42,7 +52,15 @@ export default function MercadoPagoCallback() {
       }
 
       try {
-        // Call edge function to exchange code for tokens
+        // Verify user is authenticated
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          setStatus("error");
+          setErrorMessage("Sessão expirada. Faça login novamente.");
+          return;
+        }
+
+        // Call edge function to exchange code for tokens (with auth header)
         const { data, error: invokeError } = await supabase.functions.invoke("mp-exchange-token", {
           body: { 
             code, 
@@ -54,14 +72,14 @@ export default function MercadoPagoCallback() {
         if (invokeError) {
           console.error("Edge function error:", invokeError);
           setStatus("error");
-          setErrorMessage(invokeError.message || "Erro ao conectar conta");
+          setErrorMessage("Erro ao conectar conta. Tente novamente.");
           return;
         }
 
         if (data?.error) {
           console.error("OAuth error:", data.error);
           setStatus("error");
-          setErrorMessage(data.error);
+          setErrorMessage("Erro ao conectar conta. Tente novamente.");
           return;
         }
 

@@ -38,7 +38,7 @@ const Dashboard = () => {
 
           {/* Stats Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-4">
-            <Card className="border-border shadow-card hover:shadow-glow transition-shadow">
+            <Card className="border-border shadow-soft hover:shadow-md transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between pb-2 p-3 sm:p-6 sm:pb-2">
                 <CardTitle className="text-xs sm:text-sm font-medium">Arrecadação Total</CardTitle>
                 <DollarSign className="h-4 w-4 text-primary hidden sm:block" />

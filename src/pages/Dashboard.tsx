@@ -38,7 +38,7 @@ const Dashboard = () => {
 
           {/* Stats Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-4">
-            <Card className="border-border shadow-card hover:shadow-glow transition-shadow">
+            <Card className="border-border shadow-soft hover:shadow-md transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between pb-2 p-3 sm:p-6 sm:pb-2">
                 <CardTitle className="text-xs sm:text-sm font-medium">Arrecadação Total</CardTitle>
                 <DollarSign className="h-4 w-4 text-primary hidden sm:block" />
@@ -53,7 +53,7 @@ const Dashboard = () => {
               </CardContent>
             </Card>
 
-            <Card className="border-border shadow-card hover:shadow-glow transition-shadow">
+            <Card className="border-border shadow-soft hover:shadow-md transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between pb-2 p-3 sm:p-6 sm:pb-2">
                 <CardTitle className="text-xs sm:text-sm font-medium">Últimos 7 Dias</CardTitle>
                 {stats.last7DaysGrowth >= 0 ? (
@@ -75,7 +75,7 @@ const Dashboard = () => {
             </Card>
 
             {dashboardSettings.showTicketMedio && (
-              <Card className="border-border shadow-card hover:shadow-glow transition-shadow">
+              <Card className="border-border shadow-soft hover:shadow-md transition-shadow">
                 <CardHeader className="flex flex-row items-center justify-between pb-2 p-3 sm:p-6 sm:pb-2">
                   <CardTitle className="text-xs sm:text-sm font-medium">Ticket Médio</CardTitle>
                   <Receipt className="h-4 w-4 text-accent hidden sm:block" />
@@ -92,7 +92,7 @@ const Dashboard = () => {
             )}
 
             {dashboardSettings.showTaxaConversao && (
-              <Card className="border-border shadow-card hover:shadow-glow transition-shadow">
+              <Card className="border-border shadow-soft hover:shadow-md transition-shadow">
                 <CardHeader className="flex flex-row items-center justify-between pb-2 p-3 sm:p-6 sm:pb-2">
                   <CardTitle className="text-xs sm:text-sm font-medium">Taxa de Conversão</CardTitle>
                   <Target className="h-4 w-4 text-accent hidden sm:block" />
@@ -109,7 +109,7 @@ const Dashboard = () => {
             )}
 
             {dashboardSettings.showPendentes && (
-              <Card className="border-border shadow-card hover:shadow-glow transition-shadow">
+              <Card className="border-border shadow-soft hover:shadow-md transition-shadow">
                 <CardHeader className="flex flex-row items-center justify-between pb-2 p-3 sm:p-6 sm:pb-2">
                   <CardTitle className="text-xs sm:text-sm font-medium">Pendentes</CardTitle>
                   <Clock className="h-4 w-4 text-secondary hidden sm:block" />
@@ -123,7 +123,7 @@ const Dashboard = () => {
               </Card>
             )}
 
-            <Card className="border-border shadow-card hover:shadow-glow transition-shadow">
+            <Card className="border-border shadow-soft hover:shadow-md transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between pb-2 p-3 sm:p-6 sm:pb-2">
                 <CardTitle className="text-xs sm:text-sm font-medium">Fila Atual</CardTitle>
                 <Zap className="h-4 w-4 text-primary hidden sm:block" />
@@ -139,7 +139,7 @@ const Dashboard = () => {
 
           {/* Charts */}
           <div className="grid lg:grid-cols-3 gap-6">
-            <Card className="border-border shadow-card lg:col-span-2">
+            <Card className="border-border shadow-soft lg:col-span-2">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
@@ -196,7 +196,7 @@ const Dashboard = () => {
               </CardContent>
             </Card>
 
-            <Card className="border-border shadow-card">
+            <Card className="border-border shadow-soft">
               <CardHeader>
                 <CardTitle>Status das Transações</CardTitle>
                 <CardDescription>Distribuição por status</CardDescription>
@@ -244,13 +244,13 @@ const Dashboard = () => {
           </div>
 
           {/* Quick Actions */}
-          <Card className="border-border shadow-card">
+          <Card className="border-border shadow-soft">
             <CardHeader>
               <CardTitle>Ações Rápidas</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col sm:flex-row gap-3 sm:gap-4">
               <Link to="/alerts">
-                <Button variant="hero">
+                <Button>
                   <Zap className="mr-2 h-4 w-4" />
                   Criar Alerta
                 </Button>

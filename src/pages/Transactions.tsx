@@ -262,7 +262,7 @@ export default function Transactions() {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
           {stats.map((stat) => (
-            <Card key={stat.title} className="p-4 sm:p-6 border-border shadow-card hover:shadow-glow transition-shadow">
+            <Card key={stat.title} className="p-4 sm:p-6 border-border shadow-soft hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs sm:text-sm text-muted-foreground">{stat.title}</p>
@@ -283,7 +283,7 @@ export default function Transactions() {
         </div>
 
         {/* Filters */}
-        <Card className="border-border shadow-card p-4 sm:p-6">
+        <Card className="border-border shadow-soft p-4 sm:p-6">
           <div className="space-y-4">
             {/* Search - Full width */}
             <div>
@@ -407,7 +407,7 @@ export default function Transactions() {
           </div>
         </Card>
 
-        <Card className="border-border shadow-card">
+        <Card className="border-border shadow-soft">
           <div className="p-4 sm:p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg sm:text-xl font-semibold">Histórico</h2>

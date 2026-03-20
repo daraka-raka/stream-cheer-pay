@@ -55,12 +55,12 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted to-background p-4">
-      <Card className="w-full max-w-md border-border shadow-card">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <Card className="w-full max-w-md border-border shadow-md">
         <CardHeader className="text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
             <Zap className="h-10 w-10 text-primary" />
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            <h1 className="text-3xl font-bold text-foreground">
               Streala
             </h1>
           </div>
@@ -98,7 +98,7 @@ const Auth = () => {
                     required
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={loading} variant="hero">
+                <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? "Entrando..." : "Entrar"}
                 </Button>
               </form>
@@ -249,7 +249,7 @@ const Auth = () => {
                   type="submit" 
                   className="w-full" 
                   disabled={loading || !isPasswordValid || !passwordsMatch} 
-                  variant="hero"
+                  
                 >
                   {loading ? "Criando..." : "Criar Conta"}
                 </Button>

@@ -40,7 +40,7 @@ export function AppSidebar() {
         <div className="flex items-center gap-3 p-4">
           <img src={logo} alt="Streala" className="h-8 w-8 flex-shrink-0" />
           {!isCollapsed && (
-            <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            <h1 className="text-xl font-bold text-foreground">
               Streala
             </h1>
           )}

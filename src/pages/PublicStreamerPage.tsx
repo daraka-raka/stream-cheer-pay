@@ -439,13 +439,13 @@ const PublicStreamerPage = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header com Streamer Info */}
-      <header className="border-b bg-gradient-to-r from-primary/5 via-background to-secondary/5 backdrop-blur-sm sticky top-0 z-50">
+      <header className="border-b bg-background/95 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           {/* Streamer Info - Esquerda */}
           <div className="flex items-center gap-3">
             <Avatar className="h-10 w-10 ring-2 ring-primary/20">
               <AvatarImage src={streamer.photo_url || undefined} className="object-cover" />
-              <AvatarFallback className="text-sm bg-gradient-to-br from-primary to-secondary text-primary-foreground">
+              <AvatarFallback className="text-sm bg-primary text-primary-foreground">
                 {initials}
               </AvatarFallback>
             </Avatar>
@@ -462,7 +462,7 @@ const PublicStreamerPage = () => {
           {/* Logo Streala - Direita */}
           <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <Zap className="h-5 w-5 text-primary" />
-            <span className="text-lg font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            <span className="text-lg font-bold text-foreground">
               Streala
             </span>
           </Link>
@@ -563,7 +563,7 @@ const PublicStreamerPage = () => {
                     )}
                   </CardContent>
                   <CardFooter className="p-4 pt-2 flex items-center justify-between">
-                    <span className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                    <span className="text-2xl font-bold text-primary">
                       R$ {(alert.price_cents / 100).toFixed(2)}
                     </span>
                     {!isDisabled && (
@@ -679,7 +679,7 @@ const PublicStreamerPage = () => {
             <Button variant="outline" onClick={() => setPurchaseModalOpen(false)} disabled={isProcessingPayment}>
               Cancelar
             </Button>
-            <Button onClick={handlePurchase} variant="hero" disabled={isProcessingPayment}>
+            <Button onClick={handlePurchase} disabled={isProcessingPayment}>
               {isProcessingPayment ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -462,7 +462,7 @@ const PublicStreamerPage = () => {
           {/* Logo Streala - Direita */}
           <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <Zap className="h-5 w-5 text-primary" />
-            <span className="text-lg font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            <span className="text-lg font-bold text-foreground">
               Streala
             </span>
           </Link>

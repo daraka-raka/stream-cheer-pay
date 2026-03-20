@@ -439,7 +439,7 @@ const PublicStreamerPage = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header com Streamer Info */}
-      <header className="border-b bg-gradient-to-r from-primary/5 via-background to-secondary/5 backdrop-blur-sm sticky top-0 z-50">
+      <header className="border-b bg-background/95 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           {/* Streamer Info - Esquerda */}
           <div className="flex items-center gap-3">

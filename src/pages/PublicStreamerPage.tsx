@@ -563,7 +563,7 @@ const PublicStreamerPage = () => {
                     )}
                   </CardContent>
                   <CardFooter className="p-4 pt-2 flex items-center justify-between">
-                    <span className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                    <span className="text-2xl font-bold text-primary">
                       R$ {(alert.price_cents / 100).toFixed(2)}
                     </span>
                     {!isDisabled && (

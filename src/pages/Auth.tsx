@@ -249,7 +249,7 @@ const Auth = () => {
                   type="submit" 
                   className="w-full" 
                   disabled={loading || !isPasswordValid || !passwordsMatch} 
-                  variant="hero"
+                  
                 >
                   {loading ? "Criando..." : "Criar Conta"}
                 </Button>

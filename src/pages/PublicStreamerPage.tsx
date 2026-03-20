@@ -679,7 +679,7 @@ const PublicStreamerPage = () => {
             <Button variant="outline" onClick={() => setPurchaseModalOpen(false)} disabled={isProcessingPayment}>
               Cancelar
             </Button>
-            <Button onClick={handlePurchase} variant="hero" disabled={isProcessingPayment}>
+            <Button onClick={handlePurchase} disabled={isProcessingPayment}>
               {isProcessingPayment ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

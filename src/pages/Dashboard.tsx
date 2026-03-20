@@ -250,7 +250,7 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent className="flex flex-col sm:flex-row gap-3 sm:gap-4">
               <Link to="/alerts">
-                <Button variant="hero">
+                <Button>
                   <Zap className="mr-2 h-4 w-4" />
                   Criar Alerta
                 </Button>

@@ -55,8 +55,8 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted to-background p-4">
-      <Card className="w-full max-w-md border-border shadow-card">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <Card className="w-full max-w-md border-border shadow-md">
         <CardHeader className="text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
             <Zap className="h-10 w-10 text-primary" />

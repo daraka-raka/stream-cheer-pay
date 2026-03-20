@@ -445,7 +445,7 @@ const PublicStreamerPage = () => {
           <div className="flex items-center gap-3">
             <Avatar className="h-10 w-10 ring-2 ring-primary/20">
               <AvatarImage src={streamer.photo_url || undefined} className="object-cover" />
-              <AvatarFallback className="text-sm bg-gradient-to-br from-primary to-secondary text-primary-foreground">
+              <AvatarFallback className="text-sm bg-primary text-primary-foreground">
                 {initials}
               </AvatarFallback>
             </Avatar>

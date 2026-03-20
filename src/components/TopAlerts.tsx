@@ -25,7 +25,7 @@ export const TopAlerts = ({ alerts, loading }: TopAlertsProps) => {
 
   if (loading) {
     return (
-      <Card className="border-border shadow-card">
+      <Card className="border-border shadow-soft">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-primary" />
@@ -45,7 +45,7 @@ export const TopAlerts = ({ alerts, loading }: TopAlertsProps) => {
 
   if (alerts.length === 0) {
     return (
-      <Card className="border-border shadow-card">
+      <Card className="border-border shadow-soft">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-primary" />
@@ -62,7 +62,7 @@ export const TopAlerts = ({ alerts, loading }: TopAlertsProps) => {
   }
 
   return (
-    <Card className="border-border shadow-card">
+    <Card className="border-border shadow-soft">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <TrendingUp className="h-5 w-5 text-primary" />

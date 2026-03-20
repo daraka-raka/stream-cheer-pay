@@ -139,7 +139,7 @@ const Dashboard = () => {
 
           {/* Charts */}
           <div className="grid lg:grid-cols-3 gap-6">
-            <Card className="border-border shadow-card lg:col-span-2">
+            <Card className="border-border shadow-soft lg:col-span-2">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
@@ -196,7 +196,7 @@ const Dashboard = () => {
               </CardContent>
             </Card>
 
-            <Card className="border-border shadow-card">
+            <Card className="border-border shadow-soft">
               <CardHeader>
                 <CardTitle>Status das Transações</CardTitle>
                 <CardDescription>Distribuição por status</CardDescription>
@@ -244,7 +244,7 @@ const Dashboard = () => {
           </div>
 
           {/* Quick Actions */}
-          <Card className="border-border shadow-card">
+          <Card className="border-border shadow-soft">
             <CardHeader>
               <CardTitle>Ações Rápidas</CardTitle>
             </CardHeader>

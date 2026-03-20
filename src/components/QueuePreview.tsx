@@ -47,7 +47,7 @@ export const QueuePreview = ({ queue, loading }: QueuePreviewProps) => {
 
   if (loading) {
     return (
-      <Card className="border-border shadow-card">
+      <Card className="border-border shadow-soft">
         <CardHeader>
           <CardTitle>Próximos na Fila</CardTitle>
         </CardHeader>
@@ -64,7 +64,7 @@ export const QueuePreview = ({ queue, loading }: QueuePreviewProps) => {
 
   if (queue.length === 0) {
     return (
-      <Card className="border-border shadow-card">
+      <Card className="border-border shadow-soft">
         <CardHeader>
           <CardTitle>Próximos na Fila</CardTitle>
         </CardHeader>
@@ -78,7 +78,7 @@ export const QueuePreview = ({ queue, loading }: QueuePreviewProps) => {
   }
 
   return (
-    <Card className="border-border shadow-card">
+    <Card className="border-border shadow-soft">
       <CardHeader>
         <CardTitle>Próximos na Fila</CardTitle>
       </CardHeader>

@@ -645,7 +645,7 @@ export default function Settings() {
                 <Input
                   readOnly
                   value={`https://stream-cheer-pay.lovable.app/overlay?key=${streamer?.public_key || "sua-chave"}`}
-                  className="font-mono text-sm flex-1"
+                  className="font-mono text-xs sm:text-sm flex-1 truncate"
                 />
                 <div className="flex gap-2 w-full sm:w-auto">
                   <Button

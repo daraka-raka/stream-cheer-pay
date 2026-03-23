@@ -1,161 +1,68 @@
 
 
-# Plano: Redesign Visual - Eliminar "Cara de IA"
+# Plano: Tornar o Site Responsivo para Mobile
 
-## Diagnostico: Por Que Parece Feito por IA
+## Analise do Estado Atual
 
-Pesquisei sobre o fenomeno documentado como "AI slop" em design. O artigo ["Why Your AI Keeps Building the Same Purple Gradient Website"](https://prg.sh/ramblings/Why-Your-AI-Keeps-Building-the-Same-Purple-Gradient-Website) descreve exatamente o problema do Streala:
+O projeto ja tem bastante trabalho responsivo feito (grids com `sm:`, `md:`, `lg:`, cards mobile para tabelas de transacoes). Os problemas restantes sao pontuais:
 
-| Sinal de "feito por IA" | Presente no Streala? |
-|--------------------------|---------------------|
-| Gradiente roxo/purple como cor primaria | SIM - `hsl(280 90% 60%)` em tudo |
-| Efeito "glow" neon em botoes e cards | SIM - `shadow-glow` em 15+ elementos |
-| 3 cards com icones em grid simetrico | SIM - "Como Funciona" e "Trust" usam esse padrao identico |
-| Texto gradiente multicolorido no titulo | SIM - `from-primary via-secondary to-accent` |
-| Elementos flutuantes decorativos | SIM - caixas rotacionadas com $ e Play |
-| Mockup generico de dashboard | SIM - retangulos cinza simulando UI |
-| Linguagem hiperbólica generica | SIM - "Espetáculo Interativo", "Engajamento garantido!" |
-| Border-radius excessivo (1rem) | SIM - `--radius: 1rem` em tudo |
-| Botao "hero" com gradiente + scale | SIM - `hover:scale-105 shadow-glow` |
+## Problemas Identificados
 
-Comparando com concorrentes reais (LivePix, Streamlabs):
-- **LivePix**: Fundo claro, tipografia limpa, uma cor primaria solida (azul), sem glows
-- **Streamlabs**: Fundo escuro, texto branco, verde como accent, sem gradientes em texto, tipografia bold com personalidade
+| Pagina | Problema | Impacto |
+|--------|----------|---------|
+| **Dashboard** | Grafico de receita com 300px fixos fica apertado em telas < 400px; labels do eixo X cortados | Alto |
+| **Dashboard** | Chart period tabs (`7d/30d/90d`) pode sobrepor o titulo em telas pequenas | Medio |
+| **Dashboard** | Grid de stats `grid-cols-2` funciona, mas cards opcionais (Ticket Medio, etc.) podem criar linhas desalinhadas | Baixo |
+| **Settings** | Cards com `p-6` fixo desperdicam espaco em mobile | Medio |
+| **Settings** | Secao "Links Publicos" com inputs `font-mono` pode estourar horizontalmente | Alto |
+| **Settings** | Tabela de comissoes pode ficar apertada | Medio |
+| **Alerts** | Dialog de criar/editar com `max-w-md` funciona, mas dialog de preview com `max-w-3xl` pode ser grande demais | Medio |
+| **Alerts** | Preview dialog mostra imagem `max-h-[500px]` que pode empurrar conteudo para fora | Medio |
+| **PublicStreamerPage** | Modal de compra `max-w-2xl` pode ser largo demais; preco `text-3xl` gigante | Medio |
+| **PublicStreamerPage** | Card do alerta com `hover:-translate-y-1` e botao "Comprar" `opacity-0 group-hover:opacity-100` nao funciona em touch | Alto |
+| **Notifications** | Pagina ja esta bem responsiva | - |
+| **Transactions** | Ja tem view mobile com cards | - |
+| **DashboardLayout** | Sidebar mobile funciona via Sheet | OK |
 
----
+## Mudancas Planejadas
 
-## Estrategia de Redesign
+### 1. PublicStreamerPage — Corrigir UX Touch
+- Remover `hover:-translate-y-1` em mobile (manter so `md:hover:`)
+- Tornar botao "Comprar" sempre visivel em mobile (so esconder no `md:` hover)
+- Modal de compra: `max-w-2xl` → `max-w-lg` e ajustar padding
+- Preco no modal: `text-3xl` → `text-xl sm:text-3xl`
 
-A ideia nao e copiar ninguem, mas criar uma identidade propria que pareca feita por um designer humano. Vou seguir 3 principios:
+### 2. Dashboard — Charts Responsivos
+- Reducir `h-[300px]` para `h-[220px] sm:h-[300px]` nos graficos
+- Empilhar titulo + tabs do grafico em mobile (`flex-col sm:flex-row`)
+- Esconder labels longas do eixo Y em mobile
 
-1. **Menos e mais** - Remover efeitos decorativos (glow, float, gradientes em texto)
-2. **Uma cor dominante** - Em vez de roxo+azul+ciano, usar uma paleta restrita e intencional
-3. **Assimetria e hierarquia** - Quebrar o padrao "3 cards iguais em grid"
+### 3. Settings — Padding e Overflow
+- Cards: `p-6` → `p-4 sm:p-6`
+- Input de Widget URL: adicionar `break-all` e `text-xs` em mobile
+- Instrucoes OBS: ajustar texto para nao estourar
 
----
+### 4. Alerts — Dialogs Mobile
+- Preview dialog: `max-w-3xl` → `max-w-3xl sm:max-w-3xl` com `max-h-[80vh] overflow-y-auto`
+- Preview image: `max-h-[500px]` → `max-h-[250px] sm:max-h-[500px]`
+- Cropper dialog: `max-w-2xl` → responsivo
 
-## Paleta Nova
+### 5. Ajustes Gerais
+- Garantir que todos os `DialogContent` tenham `max-h-[90vh] overflow-y-auto` para nao estourar em telas pequenas
+- Verificar que `container mx-auto px-4` esta consistente
 
-Trocar o roxo generico por uma paleta mais madura e menos "IA":
+## Arquivos Modificados
 
-| Elemento | Atual (generico) | Novo (intencional) |
-|----------|-----------------|-------------------|
-| Primary | `280 90% 60%` (roxo neon) | `250 65% 55%` (indigo profundo) |
-| Secondary | `240 100% 60%` (azul eletrico) | `250 40% 75%` (lavanda suave) |
-| Accent | `190 100% 50%` (ciano) | `160 70% 45%` (verde-menta) |
-| Background dark | `280 50% 5%` (roxo escuro) | `230 25% 8%` (cinza-azulado) |
-| Card dark | `280 40% 8%` | `230 20% 12%` |
-| Glow/Shadow | Neon roxo 40px | Sombra suave 20px com opacidade baixa |
-
----
-
-## Mudancas por Arquivo
-
-### 1. `src/index.css` - Design System
-- Trocar toda a paleta de cores (light e dark)
-- Remover `--shadow-glow` (substituir por sombra sutil)
-- Remover `--gradient-primary` (usar cor solida)
-- Reduzir `--radius` de `1rem` para `0.625rem` (menos "bolha")
-
-### 2. `src/pages/Landing.tsx` - Pagina Principal
-- **Header**: Logo com texto solido (sem gradiente), nav mais limpa
-- **Hero**: Titulo com cor solida (sem gradiente multicolorido), remover elementos flutuantes ($, Play), substituir mockup generico por screenshot real ou ilustracao mais sofisticada
-- **Como Funciona**: Redesenhar para nao ser "3 cards identicos com icone" - usar layout alternado (passo 1 esquerda, passo 2 direita, passo 3 esquerda) ou timeline vertical
-- **Trust Section**: Consolidar em 2 colunas ou layout diferente da secao anterior
-- **CTA Final**: Simplificar - sem gradientes de fundo, cor solida
-- **Social proof falsa**: Remover "Mais de 500 Streamers" (se nao for real, prejudica confianca)
-- **Copys**: Reescrever para tom mais direto e menos hiperbólico
-
-### 3. `src/components/ui/button.tsx` e `button-variants.tsx`
-- Remover variante `hero` (gradiente + scale + glow)
-- Remover variante `glow`
-- Botao primario com cor solida e hover sutil (sem glow)
-
-### 4. `tailwind.config.ts`
-- Remover `shadow-glow` e `shadow-card` customizados
-- Remover `bg-gradient-primary/hero/card`
-- Manter animacoes uteis (accordion, fade-in)
-
-### 5. `src/components/AppSidebar.tsx`
-- Logo texto com cor solida em vez de gradiente
-- Manter funcionalidade igual
-
-### 6. `src/pages/Auth.tsx`
-- Remover gradiente de fundo
-- Card mais limpo sem `shadow-card`
-- Botao "hero" trocado por `default`
-
-### 7. `src/pages/Dashboard.tsx`
-- Remover `hover:shadow-glow` dos cards de stats
-- Cards com borda sutil e sombra normal
-
-### 8. `src/components/DashboardLayout.tsx`
-- Sem mudancas visuais significativas (ja e limpo)
-
-### 9. Copys (textos) - Landing Page
-- **Antes**: "Transforme sua Live em um Espetáculo Interativo"
-- **Depois**: "Alertas pagos na sua live. Simples assim."
-- **Antes**: "Deixe seus seguidores participarem da sua stream com alertas únicos..."
-- **Depois**: "Seus viewers pagam, o alerta toca na stream. Você recebe direto no Mercado Pago."
-- Tom mais direto, menos floreado
-
----
+| Arquivo | Tipo de Mudanca |
+|---------|----------------|
+| `src/pages/PublicStreamerPage.tsx` | Touch UX, modal sizes, font sizes |
+| `src/pages/Dashboard.tsx` | Chart heights, layout flex |
+| `src/pages/Settings.tsx` | Card padding, input overflow |
+| `src/pages/Alerts.tsx` | Dialog sizes, image heights |
 
 ## O Que NAO Muda
-
-- Funcionalidade (rotas, logica, backend, edge functions)
-- Estrutura de componentes
-- Tema dark/light (apenas cores)
-- Overlay do OBS
-- Pagina publica do streamer (redesign separado se quiser)
-
----
-
-## Resumo Visual
-
-```text
-ANTES (IA tipica):
-┌─────────────────────────────────┐
-│  ⚡ Streala (gradiente roxo)    │
-│  [████ glow ████] [████ glow]   │
-│                                 │
-│  TITULO COM GRADIENTE 3 CORES   │
-│  texto generico hiperbólico     │
-│  [Botao gradiente com glow ⚡]  │
-│                                 │
-│  ┌──────┐ ┌──────┐ ┌──────┐    │  <- 3 cards identicos
-│  │ icon │ │ icon │ │ icon │    │
-│  │ glow │ │ glow │ │ glow │    │
-│  └──────┘ └──────┘ └──────┘    │
-│                                 │
-│  (repete mesmo layout)          │
-└─────────────────────────────────┘
-
-DEPOIS (profissional):
-┌─────────────────────────────────┐
-│  Streala (cor solida)    [Nav]  │
-│                                 │
-│  Titulo direto, cor solida      │
-│  Subtitulo curto e claro        │
-│  [Botao solido]  [Link texto]   │
-│                                 │
-│  1. ────────────────────        │  <- timeline/passos
-│  2. ────────────────────        │     layout variado
-│  3. ────────────────────        │
-│                                 │
-│  ┌──────────────┐ ┌──────────┐  │  <- layout 2 col
-│  │  Feature A   │ │Feature B │  │     assimetrico
-│  └──────────────┘ └──────────┘  │
-└─────────────────────────────────┘
-```
-
----
-
-## Ordem de Execucao
-
-1. Atualizar paleta de cores no design system (`index.css`)
-2. Limpar utilitarios de glow/gradiente (`tailwind.config.ts`, `button.tsx`)
-3. Redesenhar Landing page (layout + copys)
-4. Ajustar Auth, Dashboard e Sidebar para nova paleta
-5. Testar visualmente no dark e light mode
+- Logica de negocio, backend, rotas
+- Landing page (ja esta responsiva)
+- Auth page (ja esta responsiva)
+- Transactions (ja tem mobile cards)
 

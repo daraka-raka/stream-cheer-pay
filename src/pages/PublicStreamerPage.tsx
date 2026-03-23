@@ -518,7 +518,7 @@ const PublicStreamerPage = () => {
                   className={`group transition-all duration-300 relative overflow-hidden border-2 ${
                     isDisabled 
                       ? 'opacity-60 cursor-not-allowed border-border' 
-                      : 'cursor-pointer border-border hover:border-primary/50 hover:shadow-[0_0_30px_-5px_hsl(var(--primary)/0.3)] hover:-translate-y-1'
+                      : 'cursor-pointer border-border md:hover:border-primary/50 md:hover:shadow-[0_0_30px_-5px_hsl(var(--primary)/0.3)] md:hover:-translate-y-1'
                   }`}
                   style={{ animationDelay: `${index * 50}ms` }}
                   onClick={() => !isDisabled && handleAlertClick(alert)}

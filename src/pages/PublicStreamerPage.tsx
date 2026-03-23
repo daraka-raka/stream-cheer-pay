@@ -567,7 +567,7 @@ const PublicStreamerPage = () => {
                       R$ {(alert.price_cents / 100).toFixed(2)}
                     </span>
                     {!isDisabled && (
-                      <Button size="sm" variant="secondary" className="opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button size="sm" variant="secondary" className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                         Comprar
                       </Button>
                     )}

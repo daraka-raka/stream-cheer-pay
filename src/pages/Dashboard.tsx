@@ -30,7 +30,7 @@ const Dashboard = () => {
   return (
     <ProtectedRoute>
       <DashboardLayout>
-        <div className="space-y-8">
+        <div className="space-y-8 overflow-x-hidden">
           <div>
             <h1 className="text-2xl md:text-4xl font-bold mb-2">Bem-vindo, {streamer?.display_name}!</h1>
             <p className="text-muted-foreground">Acompanhe seu desempenho e gerencie seus alertas.</p>

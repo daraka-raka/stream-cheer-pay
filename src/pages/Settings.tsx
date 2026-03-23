@@ -553,8 +553,8 @@ export default function Settings() {
         </Card>
 
         {/* Perfil do Streamer */}
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Perfil do Streamer</h2>
+        <Card className="p-4 sm:p-6">
+          <h2 className="text-lg sm:text-xl font-semibold mb-4">Perfil do Streamer</h2>
           <div className="space-y-4">
             <div className="flex items-center gap-4">
               <Avatar className="h-20 w-20">

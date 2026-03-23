@@ -871,7 +871,7 @@ export default function Alerts() {
                 <img
                   src={previewAlert.media_path}
                   alt={previewAlert.title}
-                  className="w-full max-h-[500px] object-contain rounded-lg"
+                  className="w-full max-h-[250px] sm:max-h-[500px] object-contain rounded-lg"
                 />
               )}
               {previewAlert?.media_type === "video" && (

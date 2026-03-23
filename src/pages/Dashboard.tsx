@@ -155,7 +155,7 @@ const Dashboard = () => {
                   </Tabs>
                 </div>
               </CardHeader>
-              <CardContent className="h-[300px] overflow-hidden">
+              <CardContent className="h-[220px] sm:h-[300px] overflow-hidden">
                 <ChartContainer
                   config={{
                     revenue: {

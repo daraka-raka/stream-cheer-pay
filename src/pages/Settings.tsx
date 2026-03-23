@@ -618,7 +618,7 @@ export default function Settings() {
                 <Input
                   readOnly
                   value={`${window.location.origin}/@${streamer?.handle || "seu_handle"}`}
-                  className="font-mono text-sm flex-1"
+                  className="font-mono text-xs sm:text-sm flex-1 truncate"
                 />
                 <Button
                   variant="outline"

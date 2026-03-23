@@ -669,7 +669,7 @@ const PublicStreamerPage = () => {
                   {getMediaIcon(selectedAlert.media_type)}
                   <span className="ml-1 capitalize">{selectedAlert.media_type}</span>
                 </Badge>
-                <span className="text-3xl font-bold text-primary">
+                <span className="text-xl sm:text-3xl font-bold text-primary">
                   R$ {(selectedAlert.price_cents / 100).toFixed(2)}
                 </span>
               </div>

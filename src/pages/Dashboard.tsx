@@ -201,7 +201,7 @@ const Dashboard = () => {
                 <CardTitle>Status das Transações</CardTitle>
                 <CardDescription>Distribuição por status</CardDescription>
               </CardHeader>
-              <CardContent className="h-[300px] flex items-center justify-center">
+              <CardContent className="h-[220px] sm:h-[300px] flex items-center justify-center">
                 {statusChartData.length === 0 ? (
                   <p className="text-muted-foreground text-sm">Nenhuma transação ainda</p>
                 ) : (

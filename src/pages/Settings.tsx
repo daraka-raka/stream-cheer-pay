@@ -830,8 +830,8 @@ export default function Settings() {
 
 
         {/* Personalização do Dashboard */}
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Personalização do Dashboard</h2>
+        <Card className="p-4 sm:p-6">
+          <h2 className="text-lg sm:text-xl font-semibold mb-4">Personalização do Dashboard</h2>
           <p className="text-sm text-muted-foreground mb-4">
             Escolha quais cards exibir no resumo do Dashboard
           </p>

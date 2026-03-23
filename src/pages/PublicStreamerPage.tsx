@@ -609,7 +609,7 @@ const PublicStreamerPage = () => {
 
       {/* Purchase Modal */}
       <Dialog open={purchaseModalOpen} onOpenChange={setPurchaseModalOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-lg sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Comprar Alerta</DialogTitle>
             <DialogDescription>

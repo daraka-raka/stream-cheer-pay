@@ -878,7 +878,7 @@ export default function Alerts() {
                 <video
                   src={previewAlert.media_path}
                   controls
-                  className="w-full max-h-[500px] rounded-lg"
+                  className="w-full max-h-[250px] sm:max-h-[500px] rounded-lg"
                 />
               )}
               {previewAlert?.media_type === "audio" && (

@@ -141,10 +141,10 @@ const Dashboard = () => {
           <div className="grid lg:grid-cols-3 gap-6">
             <Card className="border-border shadow-soft lg:col-span-2">
               <CardHeader>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
-                    <CardTitle>Receita no Período</CardTitle>
-                    <CardDescription>Evolução da sua arrecadação</CardDescription>
+                    <CardTitle className="text-base sm:text-lg">Receita no Período</CardTitle>
+                    <CardDescription className="text-xs sm:text-sm">Evolução da sua arrecadação</CardDescription>
                   </div>
                   <Tabs value={chartPeriod} onValueChange={(v) => setChartPeriod(v as "7d" | "30d" | "90d")}>
                     <TabsList>

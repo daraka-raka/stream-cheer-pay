@@ -363,10 +363,10 @@ export default function Settings() {
         </div>
 
         {/* Configurações de Recebimento - Mercado Pago */}
-        <Card className="p-6">
+        <Card className="p-4 sm:p-6">
           <div className="flex items-center gap-2 mb-4">
             <CreditCard className="h-5 w-5 text-primary" />
-            <h2 className="text-xl font-semibold">Configurações de Recebimento</h2>
+            <h2 className="text-lg sm:text-xl font-semibold">Configurações de Recebimento</h2>
           </div>
           
           {mpConfig ? (

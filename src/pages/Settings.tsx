@@ -363,10 +363,10 @@ export default function Settings() {
         </div>
 
         {/* Configurações de Recebimento - Mercado Pago */}
-        <Card className="p-6">
+        <Card className="p-4 sm:p-6">
           <div className="flex items-center gap-2 mb-4">
             <CreditCard className="h-5 w-5 text-primary" />
-            <h2 className="text-xl font-semibold">Configurações de Recebimento</h2>
+            <h2 className="text-lg sm:text-xl font-semibold">Configurações de Recebimento</h2>
           </div>
           
           {mpConfig ? (
@@ -509,7 +509,7 @@ export default function Settings() {
         </Card>
 
         {/* Aceitar Alertas */}
-        <Card className={`p-6 ${!acceptingAlerts ? 'border-yellow-500/50 bg-yellow-500/5' : ''}`}>
+        <Card className={`p-4 sm:p-6 ${!acceptingAlerts ? 'border-yellow-500/50 bg-yellow-500/5' : ''}`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {acceptingAlerts ? (
@@ -553,8 +553,8 @@ export default function Settings() {
         </Card>
 
         {/* Perfil do Streamer */}
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Perfil do Streamer</h2>
+        <Card className="p-4 sm:p-6">
+          <h2 className="text-lg sm:text-xl font-semibold mb-4">Perfil do Streamer</h2>
           <div className="space-y-4">
             <div className="flex items-center gap-4">
               <Avatar className="h-20 w-20">
@@ -609,8 +609,8 @@ export default function Settings() {
         </Card>
 
         {/* Links Públicos */}
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Links Públicos</h2>
+        <Card className="p-4 sm:p-6">
+          <h2 className="text-lg sm:text-xl font-semibold mb-4">Links Públicos</h2>
           <div className="space-y-4">
             <div>
               <Label>Página Pública</Label>
@@ -618,7 +618,7 @@ export default function Settings() {
                 <Input
                   readOnly
                   value={`${window.location.origin}/@${streamer?.handle || "seu_handle"}`}
-                  className="font-mono text-sm flex-1"
+                  className="font-mono text-xs sm:text-sm flex-1 truncate"
                 />
                 <Button
                   variant="outline"
@@ -645,7 +645,7 @@ export default function Settings() {
                 <Input
                   readOnly
                   value={`https://stream-cheer-pay.lovable.app/overlay?key=${streamer?.public_key || "sua-chave"}`}
-                  className="font-mono text-sm flex-1"
+                  className="font-mono text-xs sm:text-sm flex-1 truncate"
                 />
                 <div className="flex gap-2 w-full sm:w-auto">
                   <Button
@@ -733,8 +733,8 @@ export default function Settings() {
         </Card>
 
         {/* Verificação de Email */}
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Verificação de Email</h2>
+        <Card className="p-4 sm:p-6">
+          <h2 className="text-lg sm:text-xl font-semibold mb-4">Verificação de Email</h2>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               {streamer?.email_verified ? (
@@ -756,10 +756,10 @@ export default function Settings() {
         </Card>
 
         {/* Notificações por Email */}
-        <Card className="p-6">
+        <Card className="p-4 sm:p-6">
           <div className="flex items-center gap-2 mb-4">
             <Mail className="h-5 w-5 text-primary" />
-            <h2 className="text-xl font-semibold">Notificações por Email</h2>
+            <h2 className="text-lg sm:text-xl font-semibold">Notificações por Email</h2>
           </div>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -830,8 +830,8 @@ export default function Settings() {
 
 
         {/* Personalização do Dashboard */}
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Personalização do Dashboard</h2>
+        <Card className="p-4 sm:p-6">
+          <h2 className="text-lg sm:text-xl font-semibold mb-4">Personalização do Dashboard</h2>
           <p className="text-sm text-muted-foreground mb-4">
             Escolha quais cards exibir no resumo do Dashboard
           </p>
@@ -876,8 +876,8 @@ export default function Settings() {
         </Card>
 
         {/* Preferências Gerais */}
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Preferências Gerais</h2>
+        <Card className="p-4 sm:p-6">
+          <h2 className="text-lg sm:text-xl font-semibold mb-4">Preferências Gerais</h2>
           <div className="space-y-4">
             <div>
               <Label>Tema</Label>

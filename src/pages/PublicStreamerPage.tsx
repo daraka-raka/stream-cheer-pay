@@ -518,7 +518,7 @@ const PublicStreamerPage = () => {
                   className={`group transition-all duration-300 relative overflow-hidden border-2 ${
                     isDisabled 
                       ? 'opacity-60 cursor-not-allowed border-border' 
-                      : 'cursor-pointer border-border hover:border-primary/50 hover:shadow-[0_0_30px_-5px_hsl(var(--primary)/0.3)] hover:-translate-y-1'
+                      : 'cursor-pointer border-border md:hover:border-primary/50 md:hover:shadow-[0_0_30px_-5px_hsl(var(--primary)/0.3)] md:hover:-translate-y-1'
                   }`}
                   style={{ animationDelay: `${index * 50}ms` }}
                   onClick={() => !isDisabled && handleAlertClick(alert)}
@@ -567,7 +567,7 @@ const PublicStreamerPage = () => {
                       R$ {(alert.price_cents / 100).toFixed(2)}
                     </span>
                     {!isDisabled && (
-                      <Button size="sm" variant="secondary" className="opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button size="sm" variant="secondary" className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                         Comprar
                       </Button>
                     )}
@@ -609,7 +609,7 @@ const PublicStreamerPage = () => {
 
       {/* Purchase Modal */}
       <Dialog open={purchaseModalOpen} onOpenChange={setPurchaseModalOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-lg sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Comprar Alerta</DialogTitle>
             <DialogDescription>
@@ -669,7 +669,7 @@ const PublicStreamerPage = () => {
                   {getMediaIcon(selectedAlert.media_type)}
                   <span className="ml-1 capitalize">{selectedAlert.media_type}</span>
                 </Badge>
-                <span className="text-3xl font-bold text-primary">
+                <span className="text-xl sm:text-3xl font-bold text-primary">
                   R$ {(selectedAlert.price_cents / 100).toFixed(2)}
                 </span>
               </div>

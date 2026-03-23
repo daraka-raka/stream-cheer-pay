@@ -597,7 +597,7 @@ export default function Alerts() {
             }
           }}
         >
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-[95vw] sm:max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingAlert ? "Editar Alerta" : "Criar Novo Alerta"}
@@ -858,7 +858,7 @@ export default function Alerts() {
           open={!!previewAlert}
           onOpenChange={(open) => !open && setPreviewAlert(null)}
         >
-          <DialogContent className="max-w-3xl">
+          <DialogContent className="max-w-[95vw] sm:max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Eye className="h-5 w-5" />
@@ -871,14 +871,14 @@ export default function Alerts() {
                 <img
                   src={previewAlert.media_path}
                   alt={previewAlert.title}
-                  className="w-full max-h-[500px] object-contain rounded-lg"
+                  className="w-full max-h-[250px] sm:max-h-[500px] object-contain rounded-lg"
                 />
               )}
               {previewAlert?.media_type === "video" && (
                 <video
                   src={previewAlert.media_path}
                   controls
-                  className="w-full max-h-[500px] rounded-lg"
+                  className="w-full max-h-[250px] sm:max-h-[500px] rounded-lg"
                 />
               )}
               {previewAlert?.media_type === "audio" && (

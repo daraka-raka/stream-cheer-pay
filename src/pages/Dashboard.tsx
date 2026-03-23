@@ -141,10 +141,10 @@ const Dashboard = () => {
           <div className="grid lg:grid-cols-3 gap-6">
             <Card className="border-border shadow-soft lg:col-span-2">
               <CardHeader>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
-                    <CardTitle>Receita no Período</CardTitle>
-                    <CardDescription>Evolução da sua arrecadação</CardDescription>
+                    <CardTitle className="text-base sm:text-lg">Receita no Período</CardTitle>
+                    <CardDescription className="text-xs sm:text-sm">Evolução da sua arrecadação</CardDescription>
                   </div>
                   <Tabs value={chartPeriod} onValueChange={(v) => setChartPeriod(v as "7d" | "30d" | "90d")}>
                     <TabsList>
@@ -155,7 +155,7 @@ const Dashboard = () => {
                   </Tabs>
                 </div>
               </CardHeader>
-              <CardContent className="h-[300px] overflow-hidden">
+              <CardContent className="h-[220px] sm:h-[300px] overflow-hidden">
                 <ChartContainer
                   config={{
                     revenue: {
@@ -201,7 +201,7 @@ const Dashboard = () => {
                 <CardTitle>Status das Transações</CardTitle>
                 <CardDescription>Distribuição por status</CardDescription>
               </CardHeader>
-              <CardContent className="h-[300px] flex items-center justify-center">
+              <CardContent className="h-[220px] sm:h-[300px] flex items-center justify-center">
                 {statusChartData.length === 0 ? (
                   <p className="text-muted-foreground text-sm">Nenhuma transação ainda</p>
                 ) : (

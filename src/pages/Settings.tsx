@@ -509,7 +509,7 @@ export default function Settings() {
         </Card>
 
         {/* Aceitar Alertas */}
-        <Card className={`p-6 ${!acceptingAlerts ? 'border-yellow-500/50 bg-yellow-500/5' : ''}`}>
+        <Card className={`p-4 sm:p-6 ${!acceptingAlerts ? 'border-yellow-500/50 bg-yellow-500/5' : ''}`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {acceptingAlerts ? (

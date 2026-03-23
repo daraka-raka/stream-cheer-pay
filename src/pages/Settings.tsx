@@ -609,8 +609,8 @@ export default function Settings() {
         </Card>
 
         {/* Links Públicos */}
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Links Públicos</h2>
+        <Card className="p-4 sm:p-6">
+          <h2 className="text-lg sm:text-xl font-semibold mb-4">Links Públicos</h2>
           <div className="space-y-4">
             <div>
               <Label>Página Pública</Label>

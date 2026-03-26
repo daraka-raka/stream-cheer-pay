@@ -506,7 +506,6 @@ export type Database = {
           finished_at: string | null
           id: number | null
           is_test: boolean | null
-          payload: Json | null
           started_at: string | null
           status: string | null
           streamer_id: string | null
@@ -518,7 +517,6 @@ export type Database = {
           finished_at?: string | null
           id?: number | null
           is_test?: boolean | null
-          payload?: never
           started_at?: string | null
           status?: string | null
           streamer_id?: string | null
@@ -530,7 +528,6 @@ export type Database = {
           finished_at?: string | null
           id?: number | null
           is_test?: boolean | null
-          payload?: never
           started_at?: string | null
           status?: string | null
           streamer_id?: string | null

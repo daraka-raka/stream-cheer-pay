@@ -1,9 +1,31 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+// Allowed origins for authenticated actions (create_test)
+const ALLOWED_ORIGINS = [
+  "https://streala.app",
+  "https://www.streala.app",
+  "https://stream-cheer-pay.lovable.app",
+];
+
+function getCorsHeaders(origin: string | null, isPublicAction: boolean): Record<string, string> {
+  if (isPublicAction) {
+    return {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    };
+  }
+
+  const isAllowed = origin && (
+    ALLOWED_ORIGINS.includes(origin) ||
+    origin.endsWith(".lovableproject.com") ||
+    origin.endsWith(".lovable.app")
+  );
+
+  return {
+    "Access-Control-Allow-Origin": isAllowed ? origin : ALLOWED_ORIGINS[0],
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  };
+}
 
 interface CreateTestAlertRequest {
   action: "create_test";
@@ -21,9 +43,17 @@ interface UpdateStatusRequest {
 type RequestBody = CreateTestAlertRequest | UpdateStatusRequest;
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight
+  const origin = req.headers.get("origin");
+
+  // Handle CORS preflight — allow all origins for preflight (action unknown yet)
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, {
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+      },
+    });
   }
 
   try {
@@ -33,6 +63,10 @@ Deno.serve(async (req) => {
 
     const body: RequestBody = await req.json();
     console.log("[manage-alert-queue] Request:", body);
+
+    // Determine CORS based on action
+    const isPublicAction = body.action === "update_status";
+    const corsHeaders = getCorsHeaders(origin, isPublicAction);
 
     // Create service role client for database operations
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
@@ -113,7 +147,6 @@ Deno.serve(async (req) => {
 
       if (!countError && count !== null && count >= 10) {
         console.log("[manage-alert-queue] Rate limit exceeded:", count);
-        // NOTE: Returning 200 avoids the frontend showing this as a runtime crash.
         return new Response(
           JSON.stringify({
             error: "Rate limit exceeded. Max 10 test alerts per hour.",
@@ -245,9 +278,10 @@ Deno.serve(async (req) => {
     );
   } catch (error) {
     console.error("[manage-alert-queue] Unexpected error:", error);
+    const fallbackCors = getCorsHeaders(origin, true);
     return new Response(
       JSON.stringify({ error: "Internal server error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...fallbackCors, "Content-Type": "application/json" } }
     );
   }
 });

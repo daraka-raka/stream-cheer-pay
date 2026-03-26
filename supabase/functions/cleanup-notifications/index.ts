@@ -6,7 +6,6 @@ const corsHeaders = {
 };
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -21,9 +20,18 @@ Deno.serve(async (req) => {
       throw new Error("Missing Supabase environment variables");
     }
 
+    // ── AUTH: Only allow service role (cron jobs) ──
+    const authHeader = req.headers.get("Authorization");
+    if (authHeader !== `Bearer ${supabaseServiceKey}`) {
+      console.error("[cleanup-notifications] Unauthorized call attempt");
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Fetch all settings with retention configured
     const { data: settings, error: settingsError } = await supabase
       .from("settings")
       .select("streamer_id, notification_retention_days")

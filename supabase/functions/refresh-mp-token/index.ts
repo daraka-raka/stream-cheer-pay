@@ -1,7 +1,6 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// Allowed origins for CORS - restrict to known domains
+// Allowed origins for CORS
 const ALLOWED_ORIGINS = [
   "https://streala.app",
   "https://www.streala.app",
@@ -26,16 +25,41 @@ interface RefreshRequest {
   streamer_id: string;
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   const origin = req.headers.get("origin");
   const corsHeaders = getCorsHeaders(origin);
 
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+
+    // ── AUTH: Verify JWT ──
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
+    if (userError || !user) {
+      console.error("[refresh-mp-token] Auth error:", userError);
+      return new Response(
+        JSON.stringify({ error: "Invalid authentication" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const { streamer_id }: RefreshRequest = await req.json();
     console.log("[refresh-mp-token] Refreshing token for streamer:", streamer_id);
 
@@ -43,12 +67,31 @@ serve(async (req) => {
       throw new Error("Missing required field: streamer_id");
     }
 
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    // ── AUTH: Verify ownership ──
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Fetch streamer's current MP config
+    const { data: streamer, error: streamerError } = await supabase
+      .from("streamers")
+      .select("id, auth_user_id")
+      .eq("id", streamer_id)
+      .single();
+
+    if (streamerError || !streamer) {
+      return new Response(
+        JSON.stringify({ error: "Streamer not found" }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (streamer.auth_user_id !== user.id) {
+      console.error("[refresh-mp-token] Ownership mismatch:", user.id, "!=", streamer.auth_user_id);
+      return new Response(
+        JSON.stringify({ error: "Forbidden" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // ── Fetch MP config ──
     const { data: mpConfig, error: configError } = await supabase
       .from("streamer_mp_config")
       .select("mp_refresh_token, token_expires_at")
@@ -85,7 +128,6 @@ serve(async (req) => {
 
     console.log("[refresh-mp-token] Refreshing expired token...");
 
-    // Refresh the token
     const tokenResponse = await fetch("https://api.mercadopago.com/oauth/token", {
       method: "POST",
       headers: {
@@ -111,11 +153,9 @@ serve(async (req) => {
     const tokens = JSON.parse(tokenText);
     console.log("[refresh-mp-token] New token received for user_id:", tokens.user_id);
 
-    // Calculate new expiration
     const newExpiresAt = new Date();
     newExpiresAt.setSeconds(newExpiresAt.getSeconds() + (tokens.expires_in || 21600));
 
-    // Update streamer MP config with new tokens
     const { error: updateError } = await supabase
       .from("streamer_mp_config")
       .update({

@@ -2,77 +2,89 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Design System — Streala
-   All colors are HSL. Palette: indigo + menta.
-*/
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
+
+/* Design System — Streala Refined Dark */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 230 25% 12%;
+    --font-display: 'Syne', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
 
-    --card: 230 15% 97%;
-    --card-foreground: 230 25% 12%;
+    --background: 240 10% 6%;
+    --foreground: 36 10% 85%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 230 25% 12%;
+    --card: 240 8% 8%;
+    --card-foreground: 36 10% 85%;
 
-    --primary: 250 55% 50%;
-    --primary-foreground: 0 0% 100%;
+    --popover: 240 8% 8%;
+    --popover-foreground: 36 10% 85%;
 
-    --secondary: 250 30% 92%;
-    --secondary-foreground: 250 55% 35%;
+    --primary: 263 70% 76%;
+    --primary-foreground: 263 80% 20%;
 
-    --muted: 230 15% 95%;
-    --muted-foreground: 230 10% 45%;
+    --secondary: 240 6% 12%;
+    --secondary-foreground: 36 10% 70%;
 
-    --accent: 160 55% 42%;
-    --accent-foreground: 0 0% 100%;
+    --muted: 240 6% 10%;
+    --muted-foreground: 36 10% 38%;
+
+    --accent: 263 70% 76%;
+    --accent-foreground: 263 80% 20%;
+
+    --accent-warm: 27 96% 61%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 230 15% 90%;
-    --input: 230 15% 90%;
-    --ring: 250 55% 50%;
+    --border: 0 0% 100% / 0.06;
+    --input: 0 0% 100% / 0.06;
+    --ring: 263 70% 76%;
 
-    --radius: 0.625rem;
+    --radius: 0.875rem;
 
-    --shadow-soft: 0 1px 3px 0 hsl(230 25% 12% / 0.06), 0 1px 2px -1px hsl(230 25% 12% / 0.06);
-    --shadow-md: 0 4px 6px -1px hsl(230 25% 12% / 0.07), 0 2px 4px -2px hsl(230 25% 12% / 0.05);
+    --shadow-soft: 0 1px 3px 0 rgba(0,0,0,0.3), 0 1px 2px -1px rgba(0,0,0,0.2);
+    --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.4), 0 2px 4px -2px rgba(0,0,0,0.25);
+
+    --sidebar-background: 240 10% 5%;
+    --sidebar-foreground: 36 10% 85%;
+    --sidebar-primary: 263 70% 76%;
+    --sidebar-primary-foreground: 263 80% 20%;
+    --sidebar-accent: 263 70% 76% / 0.08;
+    --sidebar-accent-foreground: 36 10% 85%;
+    --sidebar-border: 0 0% 100% / 0.05;
+    --sidebar-ring: 263 70% 76%;
   }
 
+  /* Dark mode is the only mode */
   .dark {
-    --background: 230 20% 7%;
-    --foreground: 0 0% 96%;
-
-    --card: 230 18% 10%;
-    --card-foreground: 0 0% 96%;
-
-    --popover: 230 18% 10%;
-    --popover-foreground: 0 0% 96%;
-
-    --primary: 250 55% 60%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 230 15% 18%;
-    --secondary-foreground: 230 10% 75%;
-
-    --muted: 230 15% 15%;
-    --muted-foreground: 230 10% 55%;
-
-    --accent: 160 55% 45%;
-    --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 62% 50%;
+    --background: 240 10% 6%;
+    --foreground: 36 10% 85%;
+    --card: 240 8% 8%;
+    --card-foreground: 36 10% 85%;
+    --popover: 240 8% 8%;
+    --popover-foreground: 36 10% 85%;
+    --primary: 263 70% 76%;
+    --primary-foreground: 263 80% 20%;
+    --secondary: 240 6% 12%;
+    --secondary-foreground: 36 10% 70%;
+    --muted: 240 6% 10%;
+    --muted-foreground: 36 10% 38%;
+    --accent: 263 70% 76%;
+    --accent-foreground: 263 80% 20%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-
-    --border: 230 15% 18%;
-    --input: 230 15% 18%;
-    --ring: 250 55% 60%;
-
-    --shadow-soft: 0 1px 3px 0 hsl(0 0% 0% / 0.2), 0 1px 2px -1px hsl(0 0% 0% / 0.15);
-    --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.25), 0 2px 4px -2px hsl(0 0% 0% / 0.15);
+    --border: 0 0% 100% / 0.06;
+    --input: 0 0% 100% / 0.06;
+    --ring: 263 70% 76%;
+    --sidebar-background: 240 10% 5%;
+    --sidebar-foreground: 36 10% 85%;
+    --sidebar-primary: 263 70% 76%;
+    --sidebar-primary-foreground: 263 80% 20%;
+    --sidebar-accent: 263 70% 76% / 0.08;
+    --sidebar-accent-foreground: 36 10% 85%;
+    --sidebar-border: 0 0% 100% / 0.05;
+    --sidebar-ring: 263 70% 76%;
   }
 }
 
@@ -81,7 +93,77 @@
     @apply border-border;
   }
 
-  body {
-    @apply bg-background text-foreground;
+  html {
+    color-scheme: dark;
   }
+
+  body {
+    font-family: var(--font-body);
+    background-color: #0f0f11;
+    color: #ddd9d0;
+    background-image: radial-gradient(circle, rgba(255,255,255,0.035) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+  }
+}
+
+/* Glow orb - fixed background element */
+.streala-orb {
+  position: fixed;
+  top: -200px;
+  right: -100px;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(124,58,237,0.07) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Shimmer line effect for cards */
+.card-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.card-shimmer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(167,139,250,0.5), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 1;
+}
+
+.card-shimmer:hover::before {
+  opacity: 1;
+}
+
+/* Live badge pulse */
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.live-dot {
+  animation: live-pulse 2s ease-in-out infinite;
+}
+
+/* Send arrow reveal on hover */
+.send-reveal {
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.group:hover .send-reveal {
+  opacity: 1;
+  transform: translateX(0);
 }

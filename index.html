@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="pt-BR" class="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -9,6 +9,7 @@
     <title>Streala - Monetize suas Lives com Alertas Multimídia</title>
     <meta name="description" content="Plataforma de monetização para streamers via alertas de imagem, áudio e vídeo." />
     <meta name="author" content="Streala" />
+    <meta name="theme-color" content="#0f0f11" />
 
     <meta property="og:title" content="Streala - Monetize suas Lives" />
     <meta property="og:description" content="Crie alertas personalizados e monetize suas streams." />
@@ -17,10 +18,15 @@
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet" />
   </head>
 
   <body>
-    <div id="root"></div>
+    <div class="streala-orb" aria-hidden="true"></div>
+    <div id="root" style="position: relative; z-index: 1;"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

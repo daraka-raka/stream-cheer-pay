@@ -1,7 +1,6 @@
-import { Home, Zap, CreditCard, Settings, LogOut, Moon, Sun, Bell } from "lucide-react";
+import { Home, Zap, CreditCard, Settings, LogOut, Bell } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
-import { useTheme } from "next-themes";
 import {
   Sidebar,
   SidebarContent,
@@ -17,7 +16,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useNotifications } from "@/hooks/use-notifications";
-import logo from "@/assets/logo.png";
 
 const navItems = [
   { path: "/dashboard", icon: Home, label: "Resumo" },
@@ -29,25 +27,24 @@ const navItems = [
 
 export function AppSidebar() {
   const { signOut } = useAuth();
-  const { theme, setTheme } = useTheme();
   const { state } = useSidebar();
   const { unreadCount } = useNotifications();
   const isCollapsed = state === "collapsed";
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="icon" className="bg-[#0e0e12] border-r border-[rgba(255,255,255,0.05)]">
       <SidebarContent>
         <div className="flex items-center gap-3 p-4">
-          <img src={logo} alt="Streala" className="h-8 w-8 flex-shrink-0" />
+          <span className="text-[rgba(167,139,250,0.5)] text-lg flex-shrink-0">⚡</span>
           {!isCollapsed && (
-            <h1 className="text-xl font-bold text-foreground">
+            <h1 className="font-display text-xl font-extrabold text-foreground">
               Streala
             </h1>
           )}
         </div>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Menu</SidebarGroupLabel>
+          <SidebarGroupLabel className="font-body text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {navItems.map((item) => {
@@ -59,14 +56,18 @@ export function AppSidebar() {
                       <NavLink
                         to={item.path}
                         className={({ isActive }) =>
-                          isActive ? "bg-primary text-primary-foreground" : ""
+                          `font-body text-sm transition-all duration-150 ${
+                            isActive
+                              ? "bg-[rgba(167,139,250,0.08)] border-l-2 border-l-primary text-foreground"
+                              : "border-l-2 border-l-transparent hover:bg-[rgba(167,139,250,0.06)] text-muted-foreground hover:text-foreground"
+                          }`
                         }
                       >
                         <div className="relative">
                           <Icon className="h-4 w-4" />
                           {showBadge && (
-                            <Badge 
-                              variant="destructive" 
+                            <Badge
+                              variant="destructive"
                               className="absolute -top-2 -right-2 h-4 w-4 p-0 flex items-center justify-center text-[10px]"
                             >
                               {unreadCount > 9 ? "9+" : unreadCount}
@@ -84,29 +85,11 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-border p-2">
+      <SidebarFooter className="border-t border-[rgba(255,255,255,0.05)] p-2">
         <Button
           variant="ghost"
           size={isCollapsed ? "icon" : "default"}
-          className="w-full justify-start"
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-        >
-          {theme === "dark" ? (
-            <>
-              <Sun className="h-4 w-4" />
-              {!isCollapsed && <span className="ml-2">Modo Claro</span>}
-            </>
-          ) : (
-            <>
-              <Moon className="h-4 w-4" />
-              {!isCollapsed && <span className="ml-2">Modo Escuro</span>}
-            </>
-          )}
-        </Button>
-        <Button
-          variant="ghost"
-          size={isCollapsed ? "icon" : "default"}
-          className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
+          className="w-full justify-start font-body text-destructive hover:text-destructive hover:bg-destructive/10"
           onClick={signOut}
         >
           <LogOut className="h-4 w-4" />

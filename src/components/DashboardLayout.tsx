@@ -12,7 +12,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       <div className="flex min-h-screen w-full">
         <AppSidebar />
         <SidebarInset className="flex-1">
-          <header className="sticky top-0 z-10 flex h-14 items-center border-b border-border bg-background px-4">
+          <header className="sticky top-0 z-10 flex h-14 items-center border-b border-[rgba(255,255,255,0.05)] bg-[#0f0f11]/95 backdrop-blur-sm px-4">
             <SidebarTrigger className="-ml-1" />
           </header>
           <main className="p-4 md:p-6 lg:p-8 overflow-x-hidden">{children}</main>

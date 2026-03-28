@@ -101,17 +101,23 @@ const Dashboard = () => {
                 </Tabs>
               </div>
               <div className="h-[220px] sm:h-[280px] overflow-hidden">
-                <ChartContainer config={{ revenue: { label: "Receita", color: "#a78bfa" } }} className="w-full h-full overflow-hidden">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                      <XAxis dataKey="date" className="text-xs" tick={{ fill: "rgba(221,217,208,0.22)", fontSize: 11, fontFamily: "DM Sans" }} />
-                      <YAxis className="text-xs" tick={{ fill: "rgba(221,217,208,0.22)", fontSize: 11, fontFamily: "DM Sans" }} tickFormatter={(value) => `R$ ${value.toFixed(0)}`} />
-                      <ChartTooltip content={<ChartTooltipContent formatter={(value) => [`R$ ${Number(value).toFixed(2)}`, "Receita"]} />} />
-                      <Line type="monotone" dataKey="revenue" stroke="#a78bfa" strokeWidth={2} dot={{ fill: "#a78bfa", r: 3 }} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
+                {chartData.length === 0 || chartData.every(d => d.revenue === 0) ? (
+                  <div className="flex items-center justify-center h-full">
+                    <p className="text-muted-foreground text-sm font-body">Nenhuma receita neste período</p>
+                  </div>
+                ) : (
+                  <ChartContainer config={{ revenue: { label: "Receita", color: "#a78bfa" } }} className="w-full h-full overflow-hidden">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={chartData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                        <XAxis dataKey="date" className="text-xs" tick={{ fill: "rgba(221,217,208,0.22)", fontSize: 11, fontFamily: "DM Sans" }} />
+                        <YAxis className="text-xs" tick={{ fill: "rgba(221,217,208,0.22)", fontSize: 11, fontFamily: "DM Sans" }} tickFormatter={(value) => `R$ ${value.toFixed(0)}`} />
+                        <ChartTooltip content={<ChartTooltipContent formatter={(value) => [`R$ ${Number(value).toFixed(2)}`, "Receita"]} />} />
+                        <Line type="monotone" dataKey="revenue" stroke="#a78bfa" strokeWidth={2} dot={{ fill: "#a78bfa", r: 3 }} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
+                )}
               </div>
             </div>
 

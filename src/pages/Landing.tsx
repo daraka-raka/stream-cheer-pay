@@ -36,9 +36,9 @@ const Landing = () => {
             </span>
           </div>
 
-          <h2 className="font-display text-[44px] font-extrabold leading-[1.05] tracking-[-0.04em] text-white mb-5">
-            Apareça{" "}
-            <em className="font-body font-light italic text-[rgba(221,217,208,0.4)] not-italic" style={{ fontStyle: 'italic' }}>
+          <h2 className="text-[44px] font-extrabold leading-[1.05] tracking-[-0.04em] text-white mb-5">
+            <span className="font-display">Apareça</span>{" "}
+            <em className="font-body font-light italic text-[rgba(221,217,208,0.4)]">
               na live.
             </em>
           </h2>

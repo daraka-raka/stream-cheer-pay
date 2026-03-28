@@ -155,9 +155,20 @@ serve(async (req) => {
       );
     }
 
-    // Sanitize buyer_note: strip HTML tags
+    if (buyer_name && (typeof buyer_name !== "string" || buyer_name.length > 50)) {
+      return new Response(
+        JSON.stringify({ error: "Nome muito longo" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Sanitize inputs: strip HTML tags
     const sanitizedNote = buyer_note 
       ? buyer_note.replace(/<[^>]*>/g, "").trim().slice(0, 200) 
+      : undefined;
+
+    const sanitizedName = buyer_name
+      ? buyer_name.replace(/<[^>]*>/g, "").trim().slice(0, 50)
       : undefined;
 
     console.log("[create-pix-payment] Validation passed for transaction:", transaction_id);

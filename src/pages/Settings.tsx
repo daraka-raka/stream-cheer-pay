@@ -908,6 +908,35 @@ export default function Settings() {
                 </Button>
               </div>
             </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Mostrar título do alerta no overlay</Label>
+                <p className="text-sm text-muted-foreground">
+                  Exibe o nome do alerta na tela durante a reprodução
+                </p>
+              </div>
+              <Switch
+                checked={settings?.show_alert_title_on_overlay ?? true}
+                onCheckedChange={(checked) => {
+                  if (streamer) {
+                    supabase
+                      .from("settings")
+                      .upsert({
+                        streamer_id: streamer.id,
+                        show_alert_title_on_overlay: checked,
+                      })
+                      .then(({ error }) => {
+                        if (error) {
+                          toast.error("Erro ao salvar configuração");
+                        } else {
+                          setSettings((prev: any) => ({ ...prev, show_alert_title_on_overlay: checked }));
+                          toast.success(checked ? "Título do alerta visível no overlay" : "Título do alerta oculto no overlay");
+                        }
+                      });
+                  }
+                }}
+              />
+            </div>
             <div>
               <Label htmlFor="imageDuration">
                 Duração de Imagens no Widget (segundos)

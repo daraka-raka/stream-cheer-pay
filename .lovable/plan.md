@@ -1,68 +1,47 @@
 
 
-# Plano: Tornar o Site Responsivo para Mobile
+# Plano: 4 Correções Pontuais
 
-## Analise do Estado Atual
+## 1. Hero — Fonte do título (Landing.tsx)
 
-O projeto ja tem bastante trabalho responsivo feito (grids com `sm:`, `md:`, `lg:`, cards mobile para tabelas de transacoes). Os problemas restantes sao pontuais:
+A imagem de referência mostra "Apareça" em uma fonte sans-serif bold/geométrica (tipo Syne) e "na live." em itálico mais leve e cinza. O código atual já faz isso, mas o `em` tem classes conflitantes (`not-italic` junto com `style={{ fontStyle: 'italic' }}`).
 
-## Problemas Identificados
+**Correção**: Remover `not-italic` da classe do `em`, garantir que "Apareça" use `font-display` (Syne) e "na live." use `font-body` (DM Sans) italic light, como na referência.
 
-| Pagina | Problema | Impacto |
-|--------|----------|---------|
-| **Dashboard** | Grafico de receita com 300px fixos fica apertado em telas < 400px; labels do eixo X cortados | Alto |
-| **Dashboard** | Chart period tabs (`7d/30d/90d`) pode sobrepor o titulo em telas pequenas | Medio |
-| **Dashboard** | Grid de stats `grid-cols-2` funciona, mas cards opcionais (Ticket Medio, etc.) podem criar linhas desalinhadas | Baixo |
-| **Settings** | Cards com `p-6` fixo desperdicam espaco em mobile | Medio |
-| **Settings** | Secao "Links Publicos" com inputs `font-mono` pode estourar horizontalmente | Alto |
-| **Settings** | Tabela de comissoes pode ficar apertada | Medio |
-| **Alerts** | Dialog de criar/editar com `max-w-md` funciona, mas dialog de preview com `max-w-3xl` pode ser grande demais | Medio |
-| **Alerts** | Preview dialog mostra imagem `max-h-[500px]` que pode empurrar conteudo para fora | Medio |
-| **PublicStreamerPage** | Modal de compra `max-w-2xl` pode ser largo demais; preco `text-3xl` gigante | Medio |
-| **PublicStreamerPage** | Card do alerta com `hover:-translate-y-1` e botao "Comprar" `opacity-0 group-hover:opacity-100` nao funciona em touch | Alto |
-| **Notifications** | Pagina ja esta bem responsiva | - |
-| **Transactions** | Ja tem view mobile com cards | - |
-| **DashboardLayout** | Sidebar mobile funciona via Sheet | OK |
+## 2. Toggle de tema claro/escuro
 
-## Mudancas Planejadas
+O `ThemeProvider` do `next-themes` está presente no `App.tsx` e o toggle existe em `Settings.tsx`. O problema é que na refatoração anterior, o sidebar perdeu o toggle de tema (foi removido). O toggle nos Settings (linha ~884) continua existente.
 
-### 1. PublicStreamerPage — Corrigir UX Touch
-- Remover `hover:-translate-y-1` em mobile (manter so `md:hover:`)
-- Tornar botao "Comprar" sempre visivel em mobile (so esconder no `md:` hover)
-- Modal de compra: `max-w-2xl` → `max-w-lg` e ajustar padding
-- Preco no modal: `text-3xl` → `text-xl sm:text-3xl`
+**Correção**: Verificar se o toggle em Settings funciona. Se o problema é que o usuário não encontra o toggle fora de Settings, re-adicionar um toggle rápido na Sidebar ou no header do Dashboard.
 
-### 2. Dashboard — Charts Responsivos
-- Reducir `h-[300px]` para `h-[220px] sm:h-[300px]` nos graficos
-- Empilhar titulo + tabs do grafico em mobile (`flex-col sm:flex-row`)
-- Esconder labels longas do eixo Y em mobile
+## 3. Gráficos do Dashboard (Receita + Status)
 
-### 3. Settings — Padding e Overflow
-- Cards: `p-6` → `p-4 sm:p-6`
-- Input de Widget URL: adicionar `break-all` e `text-xs` em mobile
-- Instrucoes OBS: ajustar texto para nao estourar
+Os gráficos de "Receita no Período" e "Status das Transações" só mostram dados de transações **pagas reais** (exclui `test_mode`). Se não houve renda, é esperado que fiquem vazios. O código em `use-dashboard-data.ts` filtra `alerts.test_mode = false` e `status = paid`.
 
-### 4. Alerts — Dialogs Mobile
-- Preview dialog: `max-w-3xl` → `max-w-3xl sm:max-w-3xl` com `max-h-[80vh] overflow-y-auto`
-- Preview image: `max-h-[500px]` → `max-h-[250px] sm:max-h-[500px]`
-- Cropper dialog: `max-w-2xl` → responsivo
+**Correção**: Adicionar um estado vazio visual nos gráficos — em vez de mostrar um chart vazio, exibir uma mensagem tipo "Nenhuma receita neste período" no gráfico de receita (igual ao que já existe no de status). Isso confirma ao usuário que não é bug.
 
-### 5. Ajustes Gerais
-- Garantir que todos os `DialogContent` tenham `max-h-[90vh] overflow-y-auto` para nao estourar em telas pequenas
-- Verificar que `container mx-auto px-4` esta consistente
+## 4. CSV — Melhorar formatação (Transactions.tsx)
+
+Problemas atuais do CSV:
+- Valores monetários sem prefixo "R$"
+- Campos com vírgula ou aspas podem quebrar o CSV (buyer_note)
+- Sem BOM UTF-8 (Excel no Windows mostra acentos errados)
+- Header "Taxa Stripe" deveria ser "Taxa Gateway"
+
+**Correção**:
+- Adicionar BOM UTF-8 (`\uFEFF`) no início
+- Usar separador `;` (padrão brasileiro para Excel)
+- Formatar valores com "R$ " prefixo
+- Escapar campos com aspas duplas
+- Traduzir status (paid → Pago, pending → Pendente, failed → Falhou)
+- Renomear "Taxa Stripe" → "Taxa Gateway"
 
 ## Arquivos Modificados
 
-| Arquivo | Tipo de Mudanca |
-|---------|----------------|
-| `src/pages/PublicStreamerPage.tsx` | Touch UX, modal sizes, font sizes |
-| `src/pages/Dashboard.tsx` | Chart heights, layout flex |
-| `src/pages/Settings.tsx` | Card padding, input overflow |
-| `src/pages/Alerts.tsx` | Dialog sizes, image heights |
-
-## O Que NAO Muda
-- Logica de negocio, backend, rotas
-- Landing page (ja esta responsiva)
-- Auth page (ja esta responsiva)
-- Transactions (ja tem mobile cards)
+| Arquivo | Mudança |
+|---------|---------|
+| `src/pages/Landing.tsx` | Fix classes do `em` no hero |
+| `src/components/AppSidebar.tsx` | Re-adicionar toggle de tema (ícone sol/lua) |
+| `src/pages/Dashboard.tsx` | Mensagem de estado vazio no gráfico de receita |
+| `src/pages/Transactions.tsx` | Reformatar exportação CSV |
 

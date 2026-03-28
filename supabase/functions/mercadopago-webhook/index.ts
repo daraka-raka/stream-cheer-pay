@@ -267,7 +267,7 @@ serve(async (req) => {
           streamer_id: transaction.streamer_id,
           status: "queued",
           is_test: false,
-          payload: { buyer_note: transaction.buyer_note },
+          payload: { buyer_note: transaction.buyer_note, buyer_name: transaction.buyer_name },
         });
 
       if (queueError) {

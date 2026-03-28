@@ -642,6 +642,7 @@ export type Database = {
           alert_between_delay_seconds: number
           alert_start_delay_seconds: number
           overlay_image_duration_seconds: number
+          show_alert_title_on_overlay: boolean
           streamer_id: string
           widget_position: string
         }[]

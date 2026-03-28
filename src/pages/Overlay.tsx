@@ -9,6 +9,7 @@ interface WidgetSettings {
   widget_position: string;
   alert_start_delay_seconds: number;
   alert_between_delay_seconds: number;
+  show_alert_title_on_overlay: boolean;
 }
 
 interface QueueItem {
@@ -86,6 +87,7 @@ const Overlay = () => {
             widget_position: settings.widget_position ?? "center",
             alert_start_delay_seconds: settings.alert_start_delay_seconds ?? 0,
             alert_between_delay_seconds: settings.alert_between_delay_seconds ?? 1,
+            show_alert_title_on_overlay: settings.show_alert_title_on_overlay ?? true,
           },
         });
       } catch (err) {
@@ -344,6 +346,7 @@ const Overlay = () => {
           alert={currentAlert}
           buyerName={currentAlert.buyerName}
           buyerNote={currentAlert.buyerNote}
+          showAlertTitle={status.settings.show_alert_title_on_overlay}
           duration={status.settings.overlay_image_duration_seconds}
           onComplete={handleAlertComplete}
         />

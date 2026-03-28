@@ -36,6 +36,7 @@ const PublicStreamerPage = () => {
   const [copied, setCopied] = useState(false);
   const [timeLeft, setTimeLeft] = useState<string>("");
   const [buyerNote, setBuyerNote] = useState<string>("");
+  const [buyerName, setBuyerName] = useState<string>("");
   const [isPolling, setIsPolling] = useState(false);
   const [honeypot, setHoneypot] = useState<string>("");
 
@@ -77,7 +78,7 @@ const PublicStreamerPage = () => {
     if (!transactionId || !pixModalOpen) return;
     const handlePaymentUpdate = (status: string) => {
       if (status === 'paid') {
-        setPixModalOpen(false); setPixData(null); setTransactionId(null); setSelectedAlert(null); setBuyerNote(""); setIsPolling(false);
+        setPixModalOpen(false); setPixData(null); setTransactionId(null); setSelectedAlert(null); setBuyerNote(""); setBuyerName(""); setIsPolling(false);
         toast({ title: "Pagamento confirmado! ✅", description: "Seu alerta foi adicionado à fila do streamer. Obrigado pela compra!" });
       } else if (status === 'failed') {
         setIsPolling(false);
@@ -123,11 +124,11 @@ const PublicStreamerPage = () => {
     setIsProcessingPayment(true);
     try {
       const newTransactionId = crypto.randomUUID();
-      const { error } = await supabase.from("transactions").insert({ id: newTransactionId, streamer_id: streamer.id, alert_id: selectedAlert.id, amount_cents: selectedAlert.price_cents, status: "pending", currency: "BRL" });
+      const { error } = await supabase.from("transactions").insert({ id: newTransactionId, streamer_id: streamer.id, alert_id: selectedAlert.id, amount_cents: selectedAlert.price_cents, status: "pending", currency: "BRL", buyer_name: buyerName.trim() || null });
       if (error) throw error;
       setTransactionId(newTransactionId);
       if (selectedAlert.test_mode) { setPurchaseModalOpen(false); setPaymentDialogOpen(true); setIsProcessingPayment(false); return; }
-      const { data: pixResponse, error: pixError } = await supabase.functions.invoke("create-pix-payment", { body: { transaction_id: newTransactionId, alert_title: selectedAlert.title, amount_cents: selectedAlert.price_cents, streamer_handle: cleanHandle, streamer_id: streamer.id, buyer_note: buyerNote.trim() || undefined, hp_field: honeypot } });
+      const { data: pixResponse, error: pixError } = await supabase.functions.invoke("create-pix-payment", { body: { transaction_id: newTransactionId, alert_title: selectedAlert.title, amount_cents: selectedAlert.price_cents, streamer_handle: cleanHandle, streamer_id: streamer.id, buyer_note: buyerNote.trim() || undefined, buyer_name: buyerName.trim() || undefined, hp_field: honeypot } });
       if (pixError) throw pixError;
       if (pixResponse?.error) throw new Error(pixResponse.error);
       setPixData(pixResponse); setPurchaseModalOpen(false); setPixModalOpen(true); setIsProcessingPayment(false);
@@ -165,7 +166,7 @@ const PublicStreamerPage = () => {
     }
   };
 
-  const handleClosePixModal = () => { setPixModalOpen(false); setPixData(null); setSelectedAlert(null); setTransactionId(null); setBuyerNote(""); setHoneypot(""); };
+  const handleClosePixModal = () => { setPixModalOpen(false); setPixData(null); setSelectedAlert(null); setTransactionId(null); setBuyerNote(""); setBuyerName(""); setHoneypot(""); };
 
   const getMediaIcon = (type: string) => {
     switch (type) {
@@ -402,9 +403,16 @@ const PublicStreamerPage = () => {
                 {selectedAlert.description && <p className="font-body text-sm text-muted-foreground">{selectedAlert.description}</p>}
               </div>
               <div className="space-y-2">
+                <label className="font-body text-sm font-medium">Seu nome</label>
+                <input value={buyerName} onChange={(e) => setBuyerName(e.target.value.slice(0, 50))} placeholder="Ex: João Silva" className="w-full p-3 rounded-lg border border-[rgba(255,255,255,0.09)] bg-[rgba(255,255,255,0.04)] text-sm font-body focus:border-[rgba(167,139,250,0.45)] focus:outline-none transition-colors" maxLength={50} />
+              </div>
+              <div className="space-y-2">
                 <label className="font-body text-sm font-medium flex items-center gap-2"><MessageSquare className="h-4 w-4" />Mensagem para o streamer (opcional)</label>
                 <textarea value={buyerNote} onChange={(e) => setBuyerNote(e.target.value.slice(0, 200))} placeholder="Ex: Manda salve pro João! 🎉" className="w-full p-3 rounded-lg border border-[rgba(255,255,255,0.09)] bg-[rgba(255,255,255,0.04)] text-sm font-body resize-none h-20 focus:border-[rgba(167,139,250,0.45)] focus:outline-none transition-colors" maxLength={200} />
                 <p className="text-xs font-body text-muted-foreground text-right">{buyerNote.length}/200</p>
+              </div>
+              <div className="flex items-center gap-2 opacity-50 cursor-not-allowed">
+                <span className="text-sm font-body">🔊 TTS em breve</span>
               </div>
               <div className="absolute left-[-9999px] top-[-9999px]" aria-hidden="true" tabIndex={-1}>
                 <label htmlFor="hp_field">Leave this empty</label>

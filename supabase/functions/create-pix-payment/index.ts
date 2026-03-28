@@ -32,6 +32,7 @@ interface PixPaymentRequest {
   streamer_handle: string;
   payer_email?: string;
   buyer_note?: string;
+  buyer_name?: string;
   hp_field?: string; // Honeypot field - should be empty
 }
 
@@ -89,7 +90,7 @@ serve(async (req) => {
     const body: PixPaymentRequest = await req.json();
     console.log("[create-pix-payment] Request body received");
 
-    const { transaction_id, alert_title, amount_cents, streamer_id, streamer_handle, payer_email, buyer_note, hp_field } = body;
+    const { transaction_id, alert_title, amount_cents, streamer_id, streamer_handle, payer_email, buyer_note, buyer_name, hp_field } = body;
 
     // Honeypot check - if filled, it's a bot
     if (hp_field && hp_field.trim() !== "") {
@@ -154,22 +155,37 @@ serve(async (req) => {
       );
     }
 
-    // Sanitize buyer_note: strip HTML tags
+    if (buyer_name && (typeof buyer_name !== "string" || buyer_name.length > 50)) {
+      return new Response(
+        JSON.stringify({ error: "Nome muito longo" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Sanitize inputs: strip HTML tags
     const sanitizedNote = buyer_note 
       ? buyer_note.replace(/<[^>]*>/g, "").trim().slice(0, 200) 
       : undefined;
 
+    const sanitizedName = buyer_name
+      ? buyer_name.replace(/<[^>]*>/g, "").trim().slice(0, 50)
+      : undefined;
+
     console.log("[create-pix-payment] Validation passed for transaction:", transaction_id);
 
-    // Update transaction with sanitized buyer note if provided
-    if (sanitizedNote) {
+    // Update transaction with sanitized fields if provided
+    if (sanitizedNote || sanitizedName) {
       const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
       const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
       const supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
       
+      const updateData: Record<string, string> = {};
+      if (sanitizedNote) updateData.buyer_note = sanitizedNote;
+      if (sanitizedName) updateData.buyer_name = sanitizedName;
+      
       await supabaseClient
         .from("transactions")
-        .update({ buyer_note: sanitizedNote })
+        .update(updateData)
         .eq("id", transaction_id);
     }
 

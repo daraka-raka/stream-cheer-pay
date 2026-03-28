@@ -26,6 +26,22 @@ const navItems = [
   { path: "/settings", icon: Settings, label: "Configurações" },
 ];
 
+function ThemeToggleButton({ isCollapsed }: { isCollapsed: boolean }) {
+  const { theme, setTheme } = useTheme();
+  const isDark = theme === "dark";
+  return (
+    <Button
+      variant="ghost"
+      size={isCollapsed ? "icon" : "default"}
+      className="w-full justify-start font-body text-muted-foreground hover:text-foreground"
+      onClick={() => setTheme(isDark ? "light" : "dark")}
+    >
+      {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+      {!isCollapsed && <span className="ml-2">{isDark ? "Modo Claro" : "Modo Escuro"}</span>}
+    </Button>
+  );
+}
+
 export function AppSidebar() {
   const { signOut } = useAuth();
   const { state } = useSidebar();

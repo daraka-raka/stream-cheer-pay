@@ -10,11 +10,12 @@ interface AlertPlayerProps {
   };
   buyerName?: string;
   buyerNote?: string;
+  showAlertTitle?: boolean;
   duration: number;
   onComplete: () => void;
 }
 
-export const AlertPlayer = ({ alert, buyerName, buyerNote, duration, onComplete }: AlertPlayerProps) => {
+export const AlertPlayer = ({ alert, buyerName, buyerNote, showAlertTitle = true, duration, onComplete }: AlertPlayerProps) => {
   const [mediaUrl, setMediaUrl] = useState<string>("");
   const [thumbUrl, setThumbUrl] = useState<string>("");
   const [isVisible, setIsVisible] = useState(false);
@@ -110,12 +111,14 @@ export const AlertPlayer = ({ alert, buyerName, buyerNote, duration, onComplete 
       {/* Texto com sombra - legível em qualquer fundo */}
       <div className="text-center space-y-2">
         {/* Título do alerta */}
-        <p 
-          className="text-3xl font-bold text-white"
-          style={textShadowStyle}
-        >
-          {alert.title}
-        </p>
+        {showAlertTitle && (
+          <p 
+            className="text-3xl font-bold text-white"
+            style={textShadowStyle}
+          >
+            {alert.title}
+          </p>
+        )}
 
         {/* Nome de quem comprou */}
         {buyerName && (

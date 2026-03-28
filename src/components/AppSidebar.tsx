@@ -1,5 +1,6 @@
-import { Home, Zap, CreditCard, Settings, LogOut, Bell } from "lucide-react";
+import { Home, Zap, CreditCard, Settings, LogOut, Bell, Sun, Moon } from "lucide-react";
 import { NavLink } from "react-router-dom";
+import { useTheme } from "next-themes";
 import { useAuth } from "@/hooks/use-auth";
 import {
   Sidebar,
@@ -24,6 +25,22 @@ const navItems = [
   { path: "/transactions", icon: CreditCard, label: "Transações" },
   { path: "/settings", icon: Settings, label: "Configurações" },
 ];
+
+function ThemeToggleButton({ isCollapsed }: { isCollapsed: boolean }) {
+  const { theme, setTheme } = useTheme();
+  const isDark = theme === "dark";
+  return (
+    <Button
+      variant="ghost"
+      size={isCollapsed ? "icon" : "default"}
+      className="w-full justify-start font-body text-muted-foreground hover:text-foreground"
+      onClick={() => setTheme(isDark ? "light" : "dark")}
+    >
+      {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+      {!isCollapsed && <span className="ml-2">{isDark ? "Modo Claro" : "Modo Escuro"}</span>}
+    </Button>
+  );
+}
 
 export function AppSidebar() {
   const { signOut } = useAuth();
@@ -85,7 +102,8 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-[rgba(255,255,255,0.05)] p-2">
+      <SidebarFooter className="border-t border-[rgba(255,255,255,0.05)] p-2 space-y-1">
+        <ThemeToggleButton isCollapsed={isCollapsed} />
         <Button
           variant="ghost"
           size={isCollapsed ? "icon" : "default"}

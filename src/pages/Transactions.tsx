@@ -178,19 +178,22 @@ export default function Transactions() {
   };
 
   const exportToCSV = () => {
-    const csv = [
-      ['Data', 'Alerta', 'Valor Total', 'Taxa Stripe', 'Taxa Streala', 'Líquido', 'Status', 'Nota'],
-      ...filteredTransactions.map(tx => [
-        new Date(tx.created_at).toLocaleDateString("pt-BR"),
-        tx.alerts?.title || "—",
-        (tx.amount_cents / 100).toFixed(2),
-        (tx.fee_stripe_cents / 100).toFixed(2),
-        (tx.fee_streala_cents / 100).toFixed(2),
-        (tx.amount_streamer_cents / 100).toFixed(2),
-        tx.status,
-        tx.buyer_note || "—"
-      ])
-    ].map(row => row.join(',')).join('\n');
+    const statusMap: Record<string, string> = { paid: "Pago", pending: "Pendente", failed: "Falhou" };
+    const escapeField = (val: string) => `"${val.replace(/"/g, '""')}"`;
+
+    const header = ['Data', 'Alerta', 'Valor Total', 'Taxa Gateway', 'Taxa Streala', 'Líquido', 'Status', 'Nota'];
+    const rows = filteredTransactions.map(tx => [
+      new Date(tx.created_at).toLocaleDateString("pt-BR"),
+      escapeField(tx.alerts?.title || "—"),
+      `"R$ ${(tx.amount_cents / 100).toFixed(2)}"`,
+      `"R$ ${(tx.fee_stripe_cents / 100).toFixed(2)}"`,
+      `"R$ ${(tx.fee_streala_cents / 100).toFixed(2)}"`,
+      `"R$ ${(tx.amount_streamer_cents / 100).toFixed(2)}"`,
+      statusMap[tx.status] || tx.status,
+      escapeField(tx.buyer_note || "—")
+    ]);
+
+    const csv = '\uFEFF' + [header.join(';'), ...rows.map(row => row.join(';'))].join('\n');
     
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);

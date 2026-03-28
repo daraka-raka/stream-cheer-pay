@@ -1,5 +1,6 @@
 import { Home, Zap, CreditCard, Settings, LogOut, Bell, Sun, Moon } from "lucide-react";
 import { NavLink } from "react-router-dom";
+import { useTheme } from "next-themes";
 import { useAuth } from "@/hooks/use-auth";
 import {
   Sidebar,
@@ -85,7 +86,8 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-[rgba(255,255,255,0.05)] p-2">
+      <SidebarFooter className="border-t border-[rgba(255,255,255,0.05)] p-2 space-y-1">
+        <ThemeToggleButton isCollapsed={isCollapsed} />
         <Button
           variant="ghost"
           size={isCollapsed ? "icon" : "default"}
